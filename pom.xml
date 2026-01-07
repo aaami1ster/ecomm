@@ -3,40 +3,46 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+    <!-- Coordinates -->
 	<groupId>com.aaami</groupId>
 	<artifactId>ecomm</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>ecomm</name>
-	<description>Demo project for Spring Boot</description>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-        <developer>
-            <id>aaami1ster</id>
-            <name>Abdalla Misbah</name>
-            <email>aaami1ster@gmail.com</email>
-        </developer>
-	</developers>
 
+    <name>ecomm</name>
+	<description>Multi-module(service) Spring Boot e-commerce system</description>
+
+    <!-- ========================= -->
+    <!-- Modules -->
+    <!-- ========================= -->
     <modules>
+        <module>shared</module>
+
         <module>services/product-service</module>
         <module>services/user-service</module>
         <module>services/order-service</module>
         <module>services/api-gateway</module>
-        <module>shared</module>
     </modules>
 
+    <!-- ========================= -->
+    <!-- Properties -->
+    <!-- ========================= -->
 	<properties>
 		<java.version>25</java.version>
         <spring.boot.version>4.0.1</spring.boot.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
+
+        <!-- Encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 
+    <!-- ========================= -->
+    <!-- Dependency Management -->
+    <!-- ========================= -->
     <dependencyManagement>
         <dependencies>
+            <!-- Spring Boot BOM -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -47,9 +53,13 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- ========================= -->
+    <!-- Plugin Management -->
+    <!-- ========================= -->
     <build>
         <pluginManagement>
             <plugins>
+                <!-- Java Compiler -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -58,10 +68,18 @@
                     </configuration>
                 </plugin>
 
+                <!-- Spring Boot Plugin (managed only) -->
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring.boot.version}</version>
+                </plugin>
+
+                <!-- Unit tests -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
