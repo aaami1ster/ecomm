@@ -1,0 +1,55 @@
+package com.aaami.user.handler;
+
+import com.aaami.cqrs.CommandHandler;
+import com.aaami.user.command.UpdateUserCommand;
+import com.aaami.user.domain.User;
+import com.aaami.user.dto.UserDto;
+import com.aaami.user.mapper.UserMapper;
+import com.aaami.user.repository.UserRepository;
+import com.aaami.user.service.PasswordEncoder;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+@Component
+@RequiredArgsConstructor
+public class UpdateUserCommandHandler implements CommandHandler<UpdateUserCommand, UserDto> {
+    
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+    
+    @Override
+    @Transactional
+    public UserDto handle(UpdateUserCommand command) {
+        User user = userRepository.findById(command.getId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + command.getId()));
+        
+        if (command.getEmail() != null && !command.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(command.getEmail())) {
+                throw new IllegalArgumentException("User with email " + command.getEmail() + " already exists");
+            }
+            user.setEmail(command.getEmail());
+        }
+        
+        if (command.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(command.getPassword()));
+        }
+        
+        if (command.getFirstName() != null) {
+            user.setFirstName(command.getFirstName());
+        }
+        
+        if (command.getLastName() != null) {
+            user.setLastName(command.getLastName());
+        }
+        
+        if (command.getRole() != null) {
+            user.setRole(command.getRole());
+        }
+        
+        User updatedUser = userRepository.save(user);
+        return userMapper.toDto(updatedUser);
+    }
+}
+
