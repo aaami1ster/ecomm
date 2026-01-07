@@ -37,6 +37,7 @@
         <testcontainers.version>1.20.4</testcontainers.version>
         <springdoc.version>2.7.0</springdoc.version>
         <lombok.version>1.18.34</lombok.version>
+        <flyway.version>11.0.0</flyway.version>
 
         <!-- Encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -86,6 +87,13 @@
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
                 <scope>provided</scope>
+            </dependency>
+            
+            <!-- Flyway Database PostgreSQL (flyway-core is managed by Spring Boot BOM) -->
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-database-postgresql</artifactId>
+                <version>${flyway.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
