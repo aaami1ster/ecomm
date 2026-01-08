@@ -2,9 +2,9 @@ package com.aaami.product.config;
 
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;
-import com.aaami.product.command.CreateProductCommand;
-import com.aaami.product.command.DeleteProductCommand;
-import com.aaami.product.command.UpdateProductCommand;
+import com.aaami.shared.command.CreateProductCommand;
+import com.aaami.shared.command.DeleteProductCommand;
+import com.aaami.shared.command.UpdateProductCommand;
 import com.aaami.product.handler.*;
 import com.aaami.product.query.GetProductQuery;
 import com.aaami.product.query.SearchProductsQuery;

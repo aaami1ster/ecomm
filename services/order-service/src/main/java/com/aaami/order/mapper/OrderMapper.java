@@ -2,8 +2,8 @@ package com.aaami.order.mapper;
 
 import com.aaami.order.domain.Order;
 import com.aaami.order.domain.OrderItem;
-import com.aaami.order.dto.OrderDto;
-import com.aaami.order.dto.OrderItemDto;
+import com.aaami.shared.dto.OrderDto;
+import com.aaami.shared.dto.OrderItemDto;
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;

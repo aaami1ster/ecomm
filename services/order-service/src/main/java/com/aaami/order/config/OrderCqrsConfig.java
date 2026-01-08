@@ -2,7 +2,7 @@ package com.aaami.order.config;
 
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;
-import com.aaami.order.command.CreateOrderCommand;
+import com.aaami.shared.command.CreateOrderCommand;
 import com.aaami.order.handler.CreateOrderCommandHandler;
 import com.aaami.order.handler.GetOrderQueryHandler;
 import com.aaami.order.handler.GetUserOrdersQueryHandler;

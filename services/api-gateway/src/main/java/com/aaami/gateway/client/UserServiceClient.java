@@ -1,8 +1,8 @@
 package com.aaami.gateway.client;
 
-import com.aaami.user.command.CreateUserCommand;
-import com.aaami.user.command.UpdateUserCommand;
-import com.aaami.user.dto.UserDto;
+import com.aaami.shared.command.CreateUserCommand;
+import com.aaami.shared.command.UpdateUserCommand;
+import com.aaami.shared.dto.UserDto;
 import com.aaami.gateway.config.ServiceProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;

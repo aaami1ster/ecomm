@@ -1,9 +1,9 @@
 package com.aaami.user.handler;
 
 import com.aaami.cqrs.CommandHandler;
-import com.aaami.user.command.UpdateUserCommand;
+import com.aaami.shared.command.UpdateUserCommand;
 import com.aaami.user.domain.User;
-import com.aaami.user.dto.UserDto;
+import com.aaami.shared.dto.UserDto;
 import com.aaami.user.mapper.UserMapper;
 import com.aaami.user.repository.UserRepository;
 import com.aaami.user.service.PasswordEncoder;

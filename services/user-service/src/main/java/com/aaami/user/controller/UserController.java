@@ -2,9 +2,9 @@ package com.aaami.user.controller;
 
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;
-import com.aaami.user.command.CreateUserCommand;
-import com.aaami.user.command.UpdateUserCommand;
-import com.aaami.user.dto.UserDto;
+import com.aaami.shared.command.CreateUserCommand;
+import com.aaami.shared.command.UpdateUserCommand;
+import com.aaami.shared.dto.UserDto;
 import com.aaami.user.query.GetUserByEmailQuery;
 import com.aaami.user.query.GetUserQuery;
 import jakarta.validation.Valid;

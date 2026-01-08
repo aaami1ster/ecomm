@@ -1,7 +1,7 @@
 package com.aaami.product.handler;
 
 import com.aaami.cqrs.CommandHandler;
-import com.aaami.product.command.DeleteProductCommand;
+import com.aaami.shared.command.DeleteProductCommand;
 import com.aaami.product.domain.Product;
 import com.aaami.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;

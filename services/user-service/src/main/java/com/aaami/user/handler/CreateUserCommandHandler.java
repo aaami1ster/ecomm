@@ -1,9 +1,9 @@
 package com.aaami.user.handler;
 
 import com.aaami.cqrs.CommandHandler;
-import com.aaami.user.command.CreateUserCommand;
+import com.aaami.shared.command.CreateUserCommand;
 import com.aaami.user.domain.User;
-import com.aaami.user.dto.UserDto;
+import com.aaami.shared.dto.UserDto;
 import com.aaami.user.mapper.UserMapper;
 import com.aaami.user.repository.UserRepository;
 import com.aaami.user.service.PasswordEncoder;
@@ -38,7 +38,7 @@ public class CreateUserCommandHandler implements CommandHandler<CreateUserComman
                 .password(passwordEncoder.encode(command.getPassword()))
                 .firstName(command.getFirstName())
                 .lastName(command.getLastName())
-                .role(command.getRole() != null ? command.getRole() : User.UserRole.USER)
+                .role(command.getRole() != null ? command.getRole() : com.aaami.shared.dto.UserRole.USER)
                 .build();
         
         User savedUser = userRepository.save(user);

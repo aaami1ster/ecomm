@@ -1,4 +1,4 @@
-package com.aaami.order.dto;
+package com.aaami.shared.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

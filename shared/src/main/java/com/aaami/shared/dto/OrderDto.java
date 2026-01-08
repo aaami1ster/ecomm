@@ -1,4 +1,4 @@
-package com.aaami.product.dto;
+package com.aaami.shared.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,17 +7,18 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductDto {
+public class OrderDto {
     private Long id;
-    private String name;
-    private String description;
-    private BigDecimal price;
-    private Integer quantity;
+    private Long userId;
+    private List<OrderItemDto> items;
+    private BigDecimal orderTotal;
+    private OrderStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

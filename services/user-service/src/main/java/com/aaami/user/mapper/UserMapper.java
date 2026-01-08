@@ -1,7 +1,7 @@
 package com.aaami.user.mapper;
 
 import com.aaami.user.domain.User;
-import com.aaami.user.dto.UserDto;
+import com.aaami.shared.dto.UserDto;
 import org.springframework.stereotype.Component;
 
 @Component

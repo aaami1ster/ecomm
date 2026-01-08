@@ -1,9 +1,9 @@
 package com.aaami.product.handler;
 
 import com.aaami.cqrs.CommandHandler;
-import com.aaami.product.command.UpdateProductCommand;
+import com.aaami.shared.command.UpdateProductCommand;
 import com.aaami.product.domain.Product;
-import com.aaami.product.dto.ProductDto;
+import com.aaami.shared.dto.ProductDto;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;

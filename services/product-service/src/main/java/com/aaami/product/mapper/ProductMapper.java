@@ -1,7 +1,7 @@
 package com.aaami.product.mapper;
 
 import com.aaami.product.domain.Product;
-import com.aaami.product.dto.ProductDto;
+import com.aaami.shared.dto.ProductDto;
 import org.springframework.stereotype.Component;
 
 @Component

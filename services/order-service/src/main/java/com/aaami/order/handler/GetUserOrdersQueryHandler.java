@@ -1,7 +1,7 @@
 package com.aaami.order.handler;
 
 import com.aaami.cqrs.QueryHandler;
-import com.aaami.order.dto.OrderDto;
+import com.aaami.shared.dto.OrderDto;
 import com.aaami.order.mapper.OrderMapper;
 import com.aaami.order.query.GetUserOrdersQuery;
 import com.aaami.order.repository.OrderRepository;

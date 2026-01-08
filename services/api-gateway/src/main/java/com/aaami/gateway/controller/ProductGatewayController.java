@@ -1,9 +1,9 @@
 package com.aaami.gateway.controller;
 
 import com.aaami.gateway.client.ProductServiceClient;
-import com.aaami.product.command.CreateProductCommand;
-import com.aaami.product.command.UpdateProductCommand;
-import com.aaami.product.dto.ProductDto;
+import com.aaami.shared.command.CreateProductCommand;
+import com.aaami.shared.command.UpdateProductCommand;
+import com.aaami.shared.dto.ProductDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

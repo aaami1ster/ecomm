@@ -2,8 +2,8 @@ package com.aaami.order.controller;
 
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;
-import com.aaami.order.command.CreateOrderCommand;
-import com.aaami.order.dto.OrderDto;
+import com.aaami.shared.command.CreateOrderCommand;
+import com.aaami.shared.dto.OrderDto;
 import com.aaami.order.query.GetOrderQuery;
 import com.aaami.order.query.GetUserOrdersQuery;
 import jakarta.validation.Valid;

@@ -1,9 +1,9 @@
 package com.aaami.gateway.client;
 
-import com.aaami.product.command.CreateProductCommand;
-import com.aaami.product.command.DeleteProductCommand;
-import com.aaami.product.command.UpdateProductCommand;
-import com.aaami.product.dto.ProductDto;
+import com.aaami.shared.command.CreateProductCommand;
+import com.aaami.shared.command.DeleteProductCommand;
+import com.aaami.shared.command.UpdateProductCommand;
+import com.aaami.shared.dto.ProductDto;
 import com.aaami.gateway.config.ServiceProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;

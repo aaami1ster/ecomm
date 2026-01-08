@@ -2,10 +2,10 @@ package com.aaami.product.controller;
 
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;
-import com.aaami.product.command.CreateProductCommand;
-import com.aaami.product.command.DeleteProductCommand;
-import com.aaami.product.command.UpdateProductCommand;
-import com.aaami.product.dto.ProductDto;
+import com.aaami.shared.command.CreateProductCommand;
+import com.aaami.shared.command.DeleteProductCommand;
+import com.aaami.shared.command.UpdateProductCommand;
+import com.aaami.shared.dto.ProductDto;
 import com.aaami.product.query.GetProductQuery;
 import com.aaami.product.query.SearchProductsQuery;
 import jakarta.validation.Valid;

@@ -1,5 +1,7 @@
-package com.aaami.order.command;
+package com.aaami.shared.command;
 
+import com.aaami.cqrs.Command;
+import com.aaami.shared.dto.ProductDto;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -11,16 +13,18 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderItemCommand {
+public class UpdateProductCommand implements Command<ProductDto> {
     @NotNull(message = "Product ID is required")
-    private Long productId;
+    private Long id;
     
-    @NotNull(message = "Quantity is required")
+    private String name;
+    
+    private String description;
+    
+    @Positive(message = "Price must be positive")
+    private BigDecimal price;
+    
     @Positive(message = "Quantity must be positive")
     private Integer quantity;
-    
-    @NotNull(message = "Unit price is required")
-    @Positive(message = "Unit price must be positive")
-    private BigDecimal unitPrice;
 }
 

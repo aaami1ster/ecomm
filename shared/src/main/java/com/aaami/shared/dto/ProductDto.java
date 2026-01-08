@@ -1,23 +1,23 @@
-package com.aaami.user.dto;
+package com.aaami.shared.dto;
 
-import com.aaami.user.domain.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDto {
+public class ProductDto {
     private Long id;
-    private String email;
-    private String firstName;
-    private String lastName;
-    private User.UserRole role;
+    private String name;
+    private String description;
+    private BigDecimal price;
+    private Integer quantity;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

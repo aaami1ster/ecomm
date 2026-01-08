@@ -1,7 +1,7 @@
 package com.aaami.user.query;
 
 import com.aaami.cqrs.Query;
-import com.aaami.user.dto.UserDto;
+import com.aaami.shared.dto.UserDto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

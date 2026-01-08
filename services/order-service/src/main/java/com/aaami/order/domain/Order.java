@@ -1,5 +1,6 @@
 package com.aaami.order.domain;
 
+import com.aaami.shared.dto.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,10 +53,6 @@ public class Order {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-    
-    public enum OrderStatus {
-        PENDING, CONFIRMED, CANCELLED, COMPLETED
     }
 }
 

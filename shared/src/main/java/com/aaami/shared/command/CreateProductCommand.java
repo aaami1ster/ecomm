@@ -1,7 +1,7 @@
-package com.aaami.product.command;
+package com.aaami.shared.command;
 
 import com.aaami.cqrs.Command;
-import com.aaami.product.dto.ProductDto;
+import com.aaami.shared.dto.ProductDto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

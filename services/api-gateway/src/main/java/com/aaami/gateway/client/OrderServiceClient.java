@@ -1,7 +1,7 @@
 package com.aaami.gateway.client;
 
-import com.aaami.order.command.CreateOrderCommand;
-import com.aaami.order.dto.OrderDto;
+import com.aaami.shared.command.CreateOrderCommand;
+import com.aaami.shared.dto.OrderDto;
 import com.aaami.gateway.config.ServiceProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;

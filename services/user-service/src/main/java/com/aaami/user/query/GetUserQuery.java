@@ -1,7 +1,7 @@
 package com.aaami.user.query;
 
 import com.aaami.cqrs.Query;
-import com.aaami.user.dto.UserDto;
+import com.aaami.shared.dto.UserDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;

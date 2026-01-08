@@ -1,5 +1,6 @@
 package com.aaami.user.domain;
 
+import com.aaami.shared.dto.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,10 +52,6 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-    
-    public enum UserRole {
-        USER, PREMIUM_USER, ADMIN
     }
 }
 

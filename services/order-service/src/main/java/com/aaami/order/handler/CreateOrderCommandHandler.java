@@ -1,11 +1,11 @@
 package com.aaami.order.handler;
 
 import com.aaami.cqrs.CommandHandler;
-import com.aaami.order.command.CreateOrderCommand;
-import com.aaami.order.command.OrderItemCommand;
+import com.aaami.shared.command.CreateOrderCommand;
+import com.aaami.shared.command.OrderItemCommand;
 import com.aaami.order.domain.Order;
 import com.aaami.order.domain.OrderItem;
-import com.aaami.order.dto.OrderDto;
+import com.aaami.shared.dto.OrderDto;
 import com.aaami.order.mapper.OrderMapper;
 import com.aaami.order.repository.OrderRepository;
 import com.aaami.order.service.DiscountService;
@@ -41,7 +41,7 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
         
         Order order = Order.builder()
                 .userId(command.getUserId())
-                .status(Order.OrderStatus.PENDING)
+                .status(com.aaami.shared.dto.OrderStatus.PENDING)
                 .items(new ArrayList<>())
                 .build();
         
@@ -84,7 +84,7 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
         
         order.setItems(orderItems);
         order.setOrderTotal(orderTotal);
-        order.setStatus(Order.OrderStatus.CONFIRMED);
+        order.setStatus(com.aaami.shared.dto.OrderStatus.CONFIRMED);
         
         Order savedOrder = orderRepository.save(order);
         return orderMapper.toDto(savedOrder);

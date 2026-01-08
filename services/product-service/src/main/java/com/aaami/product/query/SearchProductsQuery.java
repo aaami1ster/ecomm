@@ -1,7 +1,7 @@
 package com.aaami.product.query;
 
 import com.aaami.cqrs.Query;
-import com.aaami.product.dto.ProductDto;
+import com.aaami.shared.dto.ProductDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

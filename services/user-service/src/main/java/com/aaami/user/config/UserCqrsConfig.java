@@ -2,8 +2,8 @@ package com.aaami.user.config;
 
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;
-import com.aaami.user.command.CreateUserCommand;
-import com.aaami.user.command.UpdateUserCommand;
+import com.aaami.shared.command.CreateUserCommand;
+import com.aaami.shared.command.UpdateUserCommand;
 import com.aaami.user.handler.*;
 import com.aaami.user.query.GetUserByEmailQuery;
 import com.aaami.user.query.GetUserQuery;

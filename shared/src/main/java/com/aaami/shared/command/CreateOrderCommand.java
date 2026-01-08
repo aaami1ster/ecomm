@@ -1,7 +1,7 @@
-package com.aaami.order.command;
+package com.aaami.shared.command;
 
 import com.aaami.cqrs.Command;
-import com.aaami.order.dto.OrderDto;
+import com.aaami.shared.dto.OrderDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

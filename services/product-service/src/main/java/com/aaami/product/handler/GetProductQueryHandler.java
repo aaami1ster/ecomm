@@ -1,7 +1,7 @@
 package com.aaami.product.handler;
 
 import com.aaami.cqrs.QueryHandler;
-import com.aaami.product.dto.ProductDto;
+import com.aaami.shared.dto.ProductDto;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.query.GetProductQuery;
 import com.aaami.product.repository.ProductRepository;

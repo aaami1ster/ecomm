@@ -1,7 +1,7 @@
 package com.aaami.user.handler;
 
 import com.aaami.cqrs.QueryHandler;
-import com.aaami.user.dto.UserDto;
+import com.aaami.shared.dto.UserDto;
 import com.aaami.user.mapper.UserMapper;
 import com.aaami.user.query.GetUserByEmailQuery;
 import com.aaami.user.repository.UserRepository;

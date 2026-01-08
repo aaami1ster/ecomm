@@ -1,7 +1,7 @@
 package com.aaami.order.query;
 
 import com.aaami.cqrs.Query;
-import com.aaami.order.dto.OrderDto;
+import com.aaami.shared.dto.OrderDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
