@@ -3,6 +3,7 @@ package com.aaami.shared.command;
 import com.aaami.cqrs.Command;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.shared.dto.UserRole;
+import com.aaami.shared.validation.ValidUserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ public class UpdateUserCommand implements Command<UserDto> {
     
     private String lastName;
     
+    @ValidUserRole(message = "Invalid role. Valid values are: USER, PREMIUM_USER, ADMIN")
     private UserRole role;
 }
 
