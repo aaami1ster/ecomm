@@ -6,15 +6,16 @@ services:
     image: postgres:16-alpine
     container_name: ecomm-postgres
     environment:
-      POSTGRES_DB: ecomm
-      POSTGRES_USER: ecomm
-      POSTGRES_PASSWORD: ecomm
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ecomm -d ecomm"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +39,7 @@ services:
     networks:
       - ecomm-network
 
-  # Order Service 
+  # Order Service
   order-service:
     build:
       context: .
@@ -48,9 +49,9 @@ services:
     container_name: ecomm-order-service
     environment:
       # Database Configuration
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ecomm
-      SPRING_DATASOURCE_USERNAME: ecomm
-      SPRING_DATASOURCE_PASSWORD: ecomm
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
 
       # Redis Configuration
       REDIS_HOST: redis
@@ -74,7 +75,7 @@ services:
       - ecomm-network
     restart: unless-stopped
 
-# User Service 
+  # User Service
   user-service:
     build:
       context: .
@@ -84,9 +85,9 @@ services:
     container_name: ecomm-user-service
     environment:
       # Database Configuration
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ecomm
-      SPRING_DATASOURCE_USERNAME: ecomm
-      SPRING_DATASOURCE_PASSWORD: ecomm
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/user_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
 
       # Redis Configuration
       REDIS_HOST: redis
@@ -110,8 +111,7 @@ services:
       - ecomm-network
     restart: unless-stopped
 
-
-# Product Service 
+  # Product Service
   product-service:
     build:
       context: .
@@ -121,9 +121,9 @@ services:
     container_name: ecomm-product-service
     environment:
       # Database Configuration
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ecomm
-      SPRING_DATASOURCE_USERNAME: ecomm
-      SPRING_DATASOURCE_PASSWORD: ecomm
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/product_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
 
       # Redis Configuration
       REDIS_HOST: redis
@@ -146,7 +146,6 @@ services:
     networks:
       - ecomm-network
     restart: unless-stopped
-
 
   # API Gateway
   api-gateway:
@@ -182,7 +181,6 @@ services:
     networks:
       - ecomm-network
     restart: unless-stopped
-
 
 volumes:
   postgres_data:
