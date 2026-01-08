@@ -5,7 +5,6 @@ import com.aaami.shared.command.UpdateUserCommand;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.shared.dto.UserRole;
 import com.aaami.gateway.config.ServiceProperties;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -19,11 +18,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class UserServiceClient {
     
     private final RestTemplate restTemplate;
     private final ServiceProperties serviceProperties;
+    
+    public UserServiceClient(RestTemplate restTemplate, ServiceProperties serviceProperties) {
+        this.restTemplate = restTemplate;
+        this.serviceProperties = serviceProperties;
+    }
     
     public UserDto createUser(CreateUserCommand command) {
         String url = serviceProperties.getUserServiceUrl() + "/api/users";

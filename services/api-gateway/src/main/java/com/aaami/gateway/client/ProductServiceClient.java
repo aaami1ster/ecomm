@@ -5,7 +5,6 @@ import com.aaami.shared.command.DeleteProductCommand;
 import com.aaami.shared.command.UpdateProductCommand;
 import com.aaami.shared.dto.ProductDto;
 import com.aaami.gateway.config.ServiceProperties;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -18,11 +17,15 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class ProductServiceClient {
     
     private final RestTemplate restTemplate;
     private final ServiceProperties serviceProperties;
+    
+    public ProductServiceClient(RestTemplate restTemplate, ServiceProperties serviceProperties) {
+        this.restTemplate = restTemplate;
+        this.serviceProperties = serviceProperties;
+    }
     
     public ProductDto createProduct(CreateProductCommand command) {
         String url = serviceProperties.getProductServiceUrl() + "/api/products";

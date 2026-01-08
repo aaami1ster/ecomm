@@ -5,7 +5,6 @@ import com.aaami.shared.command.CreateProductCommand;
 import com.aaami.shared.command.UpdateProductCommand;
 import com.aaami.shared.dto.ProductDto;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +14,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
-@RequiredArgsConstructor
 public class ProductGatewayController {
     
     private final ProductServiceClient productServiceClient;
+    
+    public ProductGatewayController(ProductServiceClient productServiceClient) {
+        this.productServiceClient = productServiceClient;
+    }
     
     @PostMapping
     public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody CreateProductCommand command) {
