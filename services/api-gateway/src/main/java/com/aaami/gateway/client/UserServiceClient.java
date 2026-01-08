@@ -2,6 +2,7 @@ package com.aaami.gateway.client;
 
 import com.aaami.shared.command.CreateUserCommand;
 import com.aaami.shared.command.UpdateUserCommand;
+import com.aaami.shared.dto.PaginatedResponse;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.shared.dto.UserRole;
 import com.aaami.gateway.config.ServiceProperties;
@@ -11,12 +12,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -31,7 +28,8 @@ public class UserServiceClient {
         return response.getBody();
     }
     
-    public List<UserDto> getAllUsers(String firstName, String lastName, String email, UserRole role) {
+    public PaginatedResponse<UserDto> getAllUsers(String firstName, String lastName, String email, UserRole role,
+                                                   Integer page, Integer size, String sortBy, String sortDirection) {
         UriComponentsBuilder builder = UriComponentsBuilder
                 .fromUriString(serviceProperties.getUserServiceUrl() + "/api/users");
         
@@ -47,12 +45,24 @@ public class UserServiceClient {
         if (role != null) {
             builder.queryParam("role", role);
         }
+        if (page != null) {
+            builder.queryParam("page", page);
+        }
+        if (size != null) {
+            builder.queryParam("size", size);
+        }
+        if (sortBy != null) {
+            builder.queryParam("sortBy", sortBy);
+        }
+        if (sortDirection != null) {
+            builder.queryParam("sortDirection", sortDirection);
+        }
         
-        ResponseEntity<List<UserDto>> response = restTemplate.exchange(
+        ResponseEntity<PaginatedResponse<UserDto>> response = restTemplate.exchange(
                 builder.toUriString(),
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<UserDto>>() {}
+                new ParameterizedTypeReference<PaginatedResponse<UserDto>>() {}
         );
         return response.getBody();
     }

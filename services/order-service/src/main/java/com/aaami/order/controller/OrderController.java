@@ -7,6 +7,7 @@ import com.aaami.shared.command.DeleteOrderCommand;
 import com.aaami.shared.command.UpdateOrderCommand;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.OrderStatus;
+import com.aaami.shared.dto.PaginatedResponse;
 import com.aaami.order.query.GetAllOrdersQuery;
 import com.aaami.order.query.GetOrderQuery;
 import com.aaami.order.query.GetUserOrdersQuery;
@@ -33,15 +34,23 @@ public class OrderController {
     }
     
     @GetMapping
-    public ResponseEntity<List<OrderDto>> getAllOrders(
+    public ResponseEntity<PaginatedResponse<OrderDto>> getAllOrders(
             @RequestParam(value = "userId", required = false) Long userId,
-            @RequestParam(value = "status", required = false) OrderStatus status) {
+            @RequestParam(value = "status", required = false) OrderStatus status,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+            @RequestParam(value = "sortDirection", required = false, defaultValue = "desc") String sortDirection) {
         GetAllOrdersQuery query = GetAllOrdersQuery.builder()
                 .userId(userId)
                 .status(status)
+                .page(page)
+                .size(size)
+                .sortBy(sortBy)
+                .sortDirection(sortDirection)
                 .build();
-        List<OrderDto> orders = queryBus.dispatch(query);
-        return ResponseEntity.ok(orders);
+        PaginatedResponse<OrderDto> response = queryBus.dispatch(query);
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}")

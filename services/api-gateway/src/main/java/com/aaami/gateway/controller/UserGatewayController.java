@@ -3,6 +3,7 @@ package com.aaami.gateway.controller;
 import com.aaami.gateway.client.UserServiceClient;
 import com.aaami.shared.command.CreateUserCommand;
 import com.aaami.shared.command.UpdateUserCommand;
+import com.aaami.shared.dto.PaginatedResponse;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.shared.dto.UserRole;
 import jakarta.validation.Valid;
@@ -11,18 +12,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserGatewayController {
     
     private final UserServiceClient userServiceClient;
-    
-//    public UserGatewayController(UserServiceClient userServiceClient) {
-//        this.userServiceClient = userServiceClient;
-//    }
     
     @PostMapping
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserCommand command) {
@@ -31,13 +26,17 @@ public class UserGatewayController {
     }
     
     @GetMapping
-    public ResponseEntity<List<UserDto>> getAllUsers(
+    public ResponseEntity<PaginatedResponse<UserDto>> getAllUsers(
             @RequestParam(value = "firstName", required = false) String firstName,
             @RequestParam(value = "lastName", required = false) String lastName,
             @RequestParam(value = "email", required = false) String email,
-            @RequestParam(value = "role", required = false) UserRole role) {
-        List<UserDto> users = userServiceClient.getAllUsers(firstName, lastName, email, role);
-        return ResponseEntity.ok(users);
+            @RequestParam(value = "role", required = false) UserRole role,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+            @RequestParam(value = "sortDirection", required = false, defaultValue = "asc") String sortDirection) {
+        PaginatedResponse<UserDto> response = userServiceClient.getAllUsers(firstName, lastName, email, role, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}")
@@ -67,4 +66,3 @@ public class UserGatewayController {
         return ResponseEntity.noContent().build();
     }
 }
-

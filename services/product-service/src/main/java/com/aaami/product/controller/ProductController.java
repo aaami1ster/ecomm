@@ -5,6 +5,7 @@ import com.aaami.cqrs.QueryBus;
 import com.aaami.shared.command.CreateProductCommand;
 import com.aaami.shared.command.DeleteProductCommand;
 import com.aaami.shared.command.UpdateProductCommand;
+import com.aaami.shared.dto.PaginatedResponse;
 import com.aaami.shared.dto.ProductDto;
 import com.aaami.product.query.GetProductQuery;
 import com.aaami.product.query.SearchProductsQuery;
@@ -13,8 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -38,14 +37,27 @@ public class ProductController {
     }
     
     @GetMapping
-    public ResponseEntity<List<ProductDto>> searchProducts(
+    public ResponseEntity<PaginatedResponse<ProductDto>> searchProducts(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "minPrice", required = false) java.math.BigDecimal minPrice,
             @RequestParam(value = "maxPrice", required = false) java.math.BigDecimal maxPrice,
-            @RequestParam(value = "availableOnly", required = false) Boolean availableOnly) {
-        SearchProductsQuery query = new SearchProductsQuery(name, minPrice, maxPrice, availableOnly);
-        List<ProductDto> products = queryBus.dispatch(query);
-        return ResponseEntity.ok(products);
+            @RequestParam(value = "availableOnly", required = false) Boolean availableOnly,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+            @RequestParam(value = "sortDirection", required = false, defaultValue = "asc") String sortDirection) {
+        SearchProductsQuery query = SearchProductsQuery.builder()
+                .name(name)
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .availableOnly(availableOnly)
+                .page(page)
+                .size(size)
+                .sortBy(sortBy)
+                .sortDirection(sortDirection)
+                .build();
+        PaginatedResponse<ProductDto> response = queryBus.dispatch(query);
+        return ResponseEntity.ok(response);
     }
     
     @PutMapping("/{id}")

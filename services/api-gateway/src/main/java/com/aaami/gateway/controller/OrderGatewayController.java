@@ -6,6 +6,7 @@ import com.aaami.shared.command.DeleteOrderCommand;
 import com.aaami.shared.command.UpdateOrderCommand;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.OrderStatus;
+import com.aaami.shared.dto.PaginatedResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,11 +29,15 @@ public class OrderGatewayController {
     }
     
     @GetMapping
-    public ResponseEntity<List<OrderDto>> getAllOrders(
+    public ResponseEntity<PaginatedResponse<OrderDto>> getAllOrders(
             @RequestParam(value = "userId", required = false) Long userId,
-            @RequestParam(value = "status", required = false) OrderStatus status) {
-        List<OrderDto> orders = orderServiceClient.getAllOrders(userId, status);
-        return ResponseEntity.ok(orders);
+            @RequestParam(value = "status", required = false) OrderStatus status,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+            @RequestParam(value = "sortDirection", required = false, defaultValue = "desc") String sortDirection) {
+        PaginatedResponse<OrderDto> response = orderServiceClient.getAllOrders(userId, status, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}")

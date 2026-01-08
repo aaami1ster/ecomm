@@ -4,6 +4,7 @@ import com.aaami.shared.command.CreateOrderCommand;
 import com.aaami.shared.command.UpdateOrderCommand;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.OrderStatus;
+import com.aaami.shared.dto.PaginatedResponse;
 import com.aaami.gateway.config.ServiceProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
@@ -29,7 +30,8 @@ public class OrderServiceClient {
         return response.getBody();
     }
     
-    public List<OrderDto> getAllOrders(Long userId, OrderStatus status) {
+    public PaginatedResponse<OrderDto> getAllOrders(Long userId, OrderStatus status,
+                                                     Integer page, Integer size, String sortBy, String sortDirection) {
         UriComponentsBuilder builder = UriComponentsBuilder
                 .fromUriString(serviceProperties.getOrderServiceUrl() + "/api/orders");
         
@@ -39,12 +41,24 @@ public class OrderServiceClient {
         if (status != null) {
             builder.queryParam("status", status);
         }
+        if (page != null) {
+            builder.queryParam("page", page);
+        }
+        if (size != null) {
+            builder.queryParam("size", size);
+        }
+        if (sortBy != null) {
+            builder.queryParam("sortBy", sortBy);
+        }
+        if (sortDirection != null) {
+            builder.queryParam("sortDirection", sortDirection);
+        }
         
-        ResponseEntity<List<OrderDto>> response = restTemplate.exchange(
+        ResponseEntity<PaginatedResponse<OrderDto>> response = restTemplate.exchange(
                 builder.toUriString(),
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<OrderDto>>() {}
+                new ParameterizedTypeReference<PaginatedResponse<OrderDto>>() {}
         );
         return response.getBody();
     }

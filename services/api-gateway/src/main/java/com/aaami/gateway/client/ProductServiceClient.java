@@ -3,6 +3,7 @@ package com.aaami.gateway.client;
 import com.aaami.shared.command.CreateProductCommand;
 import com.aaami.shared.command.DeleteProductCommand;
 import com.aaami.shared.command.UpdateProductCommand;
+import com.aaami.shared.dto.PaginatedResponse;
 import com.aaami.shared.dto.ProductDto;
 import com.aaami.gateway.config.ServiceProperties;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -36,7 +36,8 @@ public class ProductServiceClient {
         return response.getBody();
     }
     
-    public List<ProductDto> searchProducts(String name, BigDecimal minPrice, BigDecimal maxPrice, Boolean availableOnly) {
+    public PaginatedResponse<ProductDto> searchProducts(String name, BigDecimal minPrice, BigDecimal maxPrice, Boolean availableOnly,
+                                                         Integer page, Integer size, String sortBy, String sortDirection) {
         UriComponentsBuilder builder = UriComponentsBuilder
                 .fromUriString(serviceProperties.getProductServiceUrl() + "/api/products");
         
@@ -52,12 +53,24 @@ public class ProductServiceClient {
         if (availableOnly != null) {
             builder.queryParam("availableOnly", availableOnly);
         }
+        if (page != null) {
+            builder.queryParam("page", page);
+        }
+        if (size != null) {
+            builder.queryParam("size", size);
+        }
+        if (sortBy != null) {
+            builder.queryParam("sortBy", sortBy);
+        }
+        if (sortDirection != null) {
+            builder.queryParam("sortDirection", sortDirection);
+        }
         
-        ResponseEntity<List<ProductDto>> response = restTemplate.exchange(
+        ResponseEntity<PaginatedResponse<ProductDto>> response = restTemplate.exchange(
                 builder.toUriString(),
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<ProductDto>>() {}
+                new ParameterizedTypeReference<PaginatedResponse<ProductDto>>() {}
         );
         
         return response.getBody();

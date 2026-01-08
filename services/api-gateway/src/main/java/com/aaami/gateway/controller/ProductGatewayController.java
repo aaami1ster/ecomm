@@ -3,6 +3,7 @@ package com.aaami.gateway.controller;
 import com.aaami.gateway.client.ProductServiceClient;
 import com.aaami.shared.command.CreateProductCommand;
 import com.aaami.shared.command.UpdateProductCommand;
+import com.aaami.shared.dto.PaginatedResponse;
 import com.aaami.shared.dto.ProductDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -33,13 +33,17 @@ public class ProductGatewayController {
     }
     
     @GetMapping
-    public ResponseEntity<List<ProductDto>> searchProducts(
+    public ResponseEntity<PaginatedResponse<ProductDto>> searchProducts(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
             @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
-            @RequestParam(value = "availableOnly", required = false) Boolean availableOnly) {
-        List<ProductDto> products = productServiceClient.searchProducts(name, minPrice, maxPrice, availableOnly);
-        return ResponseEntity.ok(products);
+            @RequestParam(value = "availableOnly", required = false) Boolean availableOnly,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+            @RequestParam(value = "sortDirection", required = false, defaultValue = "asc") String sortDirection) {
+        PaginatedResponse<ProductDto> response = productServiceClient.searchProducts(name, minPrice, maxPrice, availableOnly, page, size, sortBy, sortDirection);
+        return ResponseEntity.ok(response);
     }
     
     @PutMapping("/{id}")
