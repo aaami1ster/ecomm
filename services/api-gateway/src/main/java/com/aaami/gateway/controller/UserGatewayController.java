@@ -6,6 +6,7 @@ import com.aaami.shared.command.UpdateUserCommand;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.shared.dto.UserRole;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,13 +15,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserGatewayController {
     
     private final UserServiceClient userServiceClient;
     
-    public UserGatewayController(UserServiceClient userServiceClient) {
-        this.userServiceClient = userServiceClient;
-    }
+//    public UserGatewayController(UserServiceClient userServiceClient) {
+//        this.userServiceClient = userServiceClient;
+//    }
     
     @PostMapping
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserCommand command) {

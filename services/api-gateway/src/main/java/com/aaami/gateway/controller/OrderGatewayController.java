@@ -7,6 +7,7 @@ import com.aaami.shared.command.UpdateOrderCommand;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.OrderStatus;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +16,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
+@RequiredArgsConstructor
 public class OrderGatewayController {
     
     private final OrderServiceClient orderServiceClient;
-    
-    public OrderGatewayController(OrderServiceClient orderServiceClient) {
-        this.orderServiceClient = orderServiceClient;
-    }
     
     @PostMapping
     public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody CreateOrderCommand command) {

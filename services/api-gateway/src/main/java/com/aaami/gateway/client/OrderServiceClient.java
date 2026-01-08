@@ -5,6 +5,7 @@ import com.aaami.shared.command.UpdateOrderCommand;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.OrderStatus;
 import com.aaami.gateway.config.ServiceProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -16,15 +17,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class OrderServiceClient {
     
     private final RestTemplate restTemplate;
     private final ServiceProperties serviceProperties;
-    
-    public OrderServiceClient(RestTemplate restTemplate, ServiceProperties serviceProperties) {
-        this.restTemplate = restTemplate;
-        this.serviceProperties = serviceProperties;
-    }
     
     public OrderDto createOrder(CreateOrderCommand command) {
         String url = serviceProperties.getOrderServiceUrl() + "/api/orders";
