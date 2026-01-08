@@ -31,7 +31,7 @@ public class ProductController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDto> getProduct(@PathVariable Long id) {
+    public ResponseEntity<ProductDto> getProduct(@PathVariable("id") Long id) {
         GetProductQuery query = new GetProductQuery(id);
         ProductDto product = queryBus.dispatch(query);
         return ResponseEntity.ok(product);
@@ -39,10 +39,10 @@ public class ProductController {
     
     @GetMapping
     public ResponseEntity<List<ProductDto>> searchProducts(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) java.math.BigDecimal minPrice,
-            @RequestParam(required = false) java.math.BigDecimal maxPrice,
-            @RequestParam(required = false) Boolean availableOnly) {
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "minPrice", required = false) java.math.BigDecimal minPrice,
+            @RequestParam(value = "maxPrice", required = false) java.math.BigDecimal maxPrice,
+            @RequestParam(value = "availableOnly", required = false) Boolean availableOnly) {
         SearchProductsQuery query = new SearchProductsQuery(name, minPrice, maxPrice, availableOnly);
         List<ProductDto> products = queryBus.dispatch(query);
         return ResponseEntity.ok(products);
@@ -50,15 +50,15 @@ public class ProductController {
     
     @PutMapping("/{id}")
     public ResponseEntity<ProductDto> updateProduct(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateProductCommand command) {
+            @PathVariable("id") Long id,
+            @RequestBody UpdateProductCommand command) {
         command.setId(id);
         ProductDto product = commandBus.dispatch(command);
         return ResponseEntity.ok(product);
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long id) {
         DeleteProductCommand command = new DeleteProductCommand(id);
         commandBus.dispatch(command);
         return ResponseEntity.noContent().build();

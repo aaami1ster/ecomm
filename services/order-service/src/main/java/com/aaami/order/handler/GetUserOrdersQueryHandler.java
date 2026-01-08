@@ -20,7 +20,7 @@ public class GetUserOrdersQueryHandler implements QueryHandler<GetUserOrdersQuer
     
     @Override
     public List<OrderDto> handle(GetUserOrdersQuery query) {
-        return orderRepository.findByUserId(query.getUserId()).stream()
+        return orderRepository.findByUserIdAndDeletedAtIsNull(query.getUserId()).stream()
                 .map(orderMapper::toDto)
                 .collect(Collectors.toList());
     }

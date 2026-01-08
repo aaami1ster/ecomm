@@ -17,7 +17,7 @@ public class GetOrderQueryHandler implements QueryHandler<GetOrderQuery, OrderDt
     
     @Override
     public OrderDto handle(GetOrderQuery query) {
-        return orderRepository.findById(query.getId())
+        return orderRepository.findByIdAndDeletedAtIsNull(query.getId())
                 .map(orderMapper::toDto)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + query.getId()));
     }

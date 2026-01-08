@@ -27,31 +27,32 @@ public class ProductGatewayController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDto> getProduct(@PathVariable Long id) {
+    public ResponseEntity<ProductDto> getProduct(@PathVariable("id") Long id) {
         ProductDto product = productServiceClient.getProduct(id);
         return ResponseEntity.ok(product);
     }
     
     @GetMapping
     public ResponseEntity<List<ProductDto>> searchProducts(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) BigDecimal minPrice,
-            @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam(required = false) Boolean availableOnly) {
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
+            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
+            @RequestParam(value = "availableOnly", required = false) Boolean availableOnly) {
         List<ProductDto> products = productServiceClient.searchProducts(name, minPrice, maxPrice, availableOnly);
         return ResponseEntity.ok(products);
     }
     
     @PutMapping("/{id}")
     public ResponseEntity<ProductDto> updateProduct(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateProductCommand command) {
+            @PathVariable("id") Long id,
+            @RequestBody UpdateProductCommand command) {
+        command.setId(id);
         ProductDto product = productServiceClient.updateProduct(id, command);
         return ResponseEntity.ok(product);
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long id) {
         productServiceClient.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
