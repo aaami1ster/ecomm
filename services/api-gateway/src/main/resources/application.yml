@@ -1,10 +1,10 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 services:
-  product-service-url: http://localhost:8081
-  order-service-url: http://localhost:8082
-  user-service-url: http://localhost:8083
+  product-service-url: ${SERVICES_PRODUCT_SERVICE_URL:http://localhost:8081}
+  order-service-url: ${SERVICES_ORDER_SERVICE_URL:http://localhost:8082}
+  user-service-url: ${SERVICES_USER_SERVICE_URL:http://localhost:8083}
 
 spring:
   application:
