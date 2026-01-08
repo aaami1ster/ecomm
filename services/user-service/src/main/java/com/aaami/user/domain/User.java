@@ -43,6 +43,9 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -52,6 +55,10 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+    
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 }
 

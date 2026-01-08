@@ -34,6 +34,9 @@ public class GetAllUsersQueryHandler implements QueryHandler<GetAllUsersQuery, L
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             
+            // Always exclude deleted users
+            predicates.add(criteriaBuilder.isNull(root.get("deletedAt")));
+            
             if (query.getFirstName() != null && !query.getFirstName().isEmpty()) {
                 predicates.add(criteriaBuilder.like(
                         criteriaBuilder.lower(root.get("firstName")),

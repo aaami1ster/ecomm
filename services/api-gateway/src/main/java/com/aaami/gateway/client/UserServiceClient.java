@@ -79,5 +79,10 @@ public class UserServiceClient {
         );
         return response.getBody();
     }
+    
+    public void deleteUser(Long id) {
+        String url = serviceProperties.getUserServiceUrl() + "/api/users/" + id;
+        restTemplate.delete(url);
+    }
 }
 

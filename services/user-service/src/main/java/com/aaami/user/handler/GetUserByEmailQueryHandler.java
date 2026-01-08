@@ -18,7 +18,7 @@ public class GetUserByEmailQueryHandler implements QueryHandler<GetUserByEmailQu
     
     @Override
     public UserDto handle(GetUserByEmailQuery query) {
-        return userRepository.findByEmail(query.getEmail())
+        return userRepository.findByEmailAndDeletedAtIsNull(query.getEmail())
                 .map(userMapper::toDto)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + query.getEmail()));
     }

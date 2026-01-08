@@ -30,7 +30,7 @@ public class CreateUserCommandHandler implements CommandHandler<CreateUserComman
     public UserDto handle(CreateUserCommand command) {
 //        logger.info("Creating user: {}", command.getFirstName());
         log.debug("Received create request for {}", command.getFirstName());
-        if (userRepository.existsByEmail(command.getEmail())) {
+        if (userRepository.existsByEmailAndDeletedAtIsNull(command.getEmail())) {
             throw new DuplicateEmailException("User with email " + command.getEmail() + " already exists");
         }
         

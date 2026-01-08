@@ -10,7 +10,14 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
+    Optional<User> findByIdAndDeletedAtIsNull(Long id);
+    Optional<User> findByEmailAndDeletedAtIsNull(String email);
+    boolean existsByEmailAndDeletedAtIsNull(String email);
+    
+    // Legacy methods for backward compatibility (will be filtered in handlers)
+    @Deprecated
     Optional<User> findByEmail(String email);
+    @Deprecated
     boolean existsByEmail(String email);
 }
 

@@ -18,7 +18,7 @@ public class GetUserQueryHandler implements QueryHandler<GetUserQuery, UserDto> 
     
     @Override
     public UserDto handle(GetUserQuery query) {
-        return userRepository.findById(query.getId())
+        return userRepository.findByIdAndDeletedAtIsNull(query.getId())
                 .map(userMapper::toDto)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + query.getId()));
     }

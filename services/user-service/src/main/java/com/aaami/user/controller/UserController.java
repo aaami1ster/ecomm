@@ -3,6 +3,7 @@ package com.aaami.user.controller;
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;
 import com.aaami.shared.command.CreateUserCommand;
+import com.aaami.shared.command.DeleteUserCommand;
 import com.aaami.shared.command.UpdateUserCommand;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.shared.dto.UserRole;
@@ -68,6 +69,13 @@ public class UserController {
         command.setId(id);
         UserDto user = commandBus.dispatch(command);
         return ResponseEntity.ok(user);
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
+        DeleteUserCommand command = new DeleteUserCommand(id);
+        commandBus.dispatch(command);
+        return ResponseEntity.noContent().build();
     }
 }
 

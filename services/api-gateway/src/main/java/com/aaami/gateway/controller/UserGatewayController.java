@@ -55,5 +55,11 @@ public class UserGatewayController {
         UserDto user = userServiceClient.updateUser(id, command);
         return ResponseEntity.ok(user);
     }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
+        userServiceClient.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
 }
 

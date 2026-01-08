@@ -24,11 +24,11 @@ public class UpdateUserCommandHandler implements CommandHandler<UpdateUserComman
     @Override
     @Transactional
     public UserDto handle(UpdateUserCommand command) {
-        User user = userRepository.findById(command.getId())
+        User user = userRepository.findByIdAndDeletedAtIsNull(command.getId())
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + command.getId()));
         
         if (command.getEmail() != null && !command.getEmail().equals(user.getEmail())) {
-            if (userRepository.existsByEmail(command.getEmail())) {
+            if (userRepository.existsByEmailAndDeletedAtIsNull(command.getEmail())) {
                 throw new DuplicateEmailException("User with email " + command.getEmail() + " already exists");
             }
             user.setEmail(command.getEmail());
