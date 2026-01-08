@@ -5,6 +5,8 @@ import com.aaami.cqrs.QueryBus;
 import com.aaami.shared.command.CreateUserCommand;
 import com.aaami.shared.command.UpdateUserCommand;
 import com.aaami.shared.dto.UserDto;
+import com.aaami.shared.dto.UserRole;
+import com.aaami.user.query.GetAllUsersQuery;
 import com.aaami.user.query.GetUserByEmailQuery;
 import com.aaami.user.query.GetUserQuery;
 import jakarta.validation.Valid;
@@ -12,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -25,6 +29,22 @@ public class UserController {
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserCommand command) {
         UserDto user = commandBus.dispatch(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<UserDto>> getAllUsers(
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) UserRole role) {
+        GetAllUsersQuery query = GetAllUsersQuery.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email)
+                .role(role)
+                .build();
+        List<UserDto> users = queryBus.dispatch(query);
+        return ResponseEntity.ok(users);
     }
     
     @GetMapping("/{id}")

@@ -5,6 +5,7 @@ import com.aaami.cqrs.QueryBus;
 import com.aaami.shared.command.CreateUserCommand;
 import com.aaami.shared.command.UpdateUserCommand;
 import com.aaami.user.handler.*;
+import com.aaami.user.query.GetAllUsersQuery;
 import com.aaami.user.query.GetUserByEmailQuery;
 import com.aaami.user.query.GetUserQuery;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class UserCqrsConfig {
     private final UpdateUserCommandHandler updateUserCommandHandler;
     private final GetUserQueryHandler getUserQueryHandler;
     private final GetUserByEmailQueryHandler getUserByEmailQueryHandler;
+    private final GetAllUsersQueryHandler getAllUsersQueryHandler;
     
     @PostConstruct
     public void registerHandlers() {
@@ -32,6 +34,7 @@ public class UserCqrsConfig {
         // Register query handlers
         queryBus.registerHandler(GetUserQuery.class, getUserQueryHandler);
         queryBus.registerHandler(GetUserByEmailQuery.class, getUserByEmailQueryHandler);
+        queryBus.registerHandler(GetAllUsersQuery.class, getAllUsersQueryHandler);
     }
 }
 

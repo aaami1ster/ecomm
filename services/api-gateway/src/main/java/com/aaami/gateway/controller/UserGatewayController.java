@@ -4,11 +4,14 @@ import com.aaami.gateway.client.UserServiceClient;
 import com.aaami.shared.command.CreateUserCommand;
 import com.aaami.shared.command.UpdateUserCommand;
 import com.aaami.shared.dto.UserDto;
+import com.aaami.shared.dto.UserRole;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -21,6 +24,16 @@ public class UserGatewayController {
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserCommand command) {
         UserDto user = userServiceClient.createUser(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<UserDto>> getAllUsers(
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) UserRole role) {
+        List<UserDto> users = userServiceClient.getAllUsers(firstName, lastName, email, role);
+        return ResponseEntity.ok(users);
     }
     
     @GetMapping("/{id}")
