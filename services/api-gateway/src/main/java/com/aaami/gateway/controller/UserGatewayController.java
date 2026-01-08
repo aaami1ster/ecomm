@@ -51,7 +51,8 @@ public class UserGatewayController {
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(
             @PathVariable("id") Long id,
-            @Valid @RequestBody UpdateUserCommand command) {
+            @RequestBody UpdateUserCommand command) {
+        command.setId(id);
         UserDto user = userServiceClient.updateUser(id, command);
         return ResponseEntity.ok(user);
     }
