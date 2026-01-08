@@ -48,25 +48,26 @@ services:
         MODULE: order-service
     container_name: ecomm-order-service
     environment:
+      # Server Configuration
+      SERVER_PORT: 8082
+
       # Database Configuration
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
 
-      # Redis Configuration
+      # Redis Configuration (if needed)
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
 
     ports:
-      - "8080:8080"
+      - "8082:8082"
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -84,25 +85,26 @@ services:
         MODULE: user-service
     container_name: ecomm-user-service
     environment:
+      # Server Configuration
+      SERVER_PORT: 8083
+
       # Database Configuration
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/user_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
 
-      # Redis Configuration
+      # Redis Configuration (if needed)
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
 
     ports:
-      - "8080:8080"
+      - "8083:8083"
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -120,25 +122,26 @@ services:
         MODULE: product-service
     container_name: ecomm-product-service
     environment:
+      # Server Configuration
+      SERVER_PORT: 8081
+
       # Database Configuration
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/product_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
 
-      # Redis Configuration
+      # Redis Configuration (if needed)
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
 
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -157,14 +160,14 @@ services:
     container_name: ecomm-api-gateway
     environment:
       # Server Configuration
-      SERVER_PORT: 8081
+      SERVER_PORT: 8080
 
-      # Service URLs
-      PRODUCT_SERVICE_URL: http://product-service:8081
-      ORDER_SERVICE_URL: http://order-service:8082
-      USER_SERVICE_URL: http://user-service:8083
+      # Service URLs (using container names and internal ports)
+      SERVICES_PRODUCT_SERVICE_URL: http://product-service:8081
+      SERVICES_ORDER_SERVICE_URL: http://order-service:8082
+      SERVICES_USER_SERVICE_URL: http://user-service:8083
     ports:
-      - "8081:8081"
+      - "8080:8080"
     depends_on:
       product-service:
         condition: service_healthy
@@ -173,7 +176,7 @@ services:
       user-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
