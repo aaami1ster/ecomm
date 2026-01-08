@@ -33,10 +33,10 @@ public class UserController {
     
     @GetMapping
     public ResponseEntity<List<UserDto>> getAllUsers(
-            @RequestParam(required = false) String firstName,
-            @RequestParam(required = false) String lastName,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) UserRole role) {
+            @RequestParam(value = "firstName", required = false) String firstName,
+            @RequestParam(value = "lastName", required = false) String lastName,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "role", required = false) UserRole role) {
         GetAllUsersQuery query = GetAllUsersQuery.builder()
                 .firstName(firstName)
                 .lastName(lastName)
@@ -48,14 +48,14 @@ public class UserController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUser(@PathVariable("id") Long id) {
         GetUserQuery query = new GetUserQuery(id);
         UserDto user = queryBus.dispatch(query);
         return ResponseEntity.ok(user);
     }
     
     @GetMapping("/email/{email}")
-    public ResponseEntity<UserDto> getUserByEmail(@PathVariable String email) {
+    public ResponseEntity<UserDto> getUserByEmail(@PathVariable("email") String email) {
         GetUserByEmailQuery query = new GetUserByEmailQuery(email);
         UserDto user = queryBus.dispatch(query);
         return ResponseEntity.ok(user);
@@ -63,7 +63,7 @@ public class UserController {
     
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody UpdateUserCommand command) {
         command.setId(id);
         UserDto user = commandBus.dispatch(command);

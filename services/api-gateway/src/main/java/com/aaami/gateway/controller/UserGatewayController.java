@@ -28,29 +28,29 @@ public class UserGatewayController {
     
     @GetMapping
     public ResponseEntity<List<UserDto>> getAllUsers(
-            @RequestParam(required = false) String firstName,
-            @RequestParam(required = false) String lastName,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) UserRole role) {
+            @RequestParam(value = "firstName", required = false) String firstName,
+            @RequestParam(value = "lastName", required = false) String lastName,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "role", required = false) UserRole role) {
         List<UserDto> users = userServiceClient.getAllUsers(firstName, lastName, email, role);
         return ResponseEntity.ok(users);
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUser(@PathVariable("id") Long id) {
         UserDto user = userServiceClient.getUser(id);
         return ResponseEntity.ok(user);
     }
     
     @GetMapping("/email/{email}")
-    public ResponseEntity<UserDto> getUserByEmail(@PathVariable String email) {
+    public ResponseEntity<UserDto> getUserByEmail(@PathVariable("email") String email) {
         UserDto user = userServiceClient.getUserByEmail(email);
         return ResponseEntity.ok(user);
     }
     
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody UpdateUserCommand command) {
         UserDto user = userServiceClient.updateUser(id, command);
         return ResponseEntity.ok(user);
