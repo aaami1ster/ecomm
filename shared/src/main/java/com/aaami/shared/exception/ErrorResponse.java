@@ -1,4 +1,4 @@
-package com.aaami.user.exception;
+package com.aaami.shared.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
