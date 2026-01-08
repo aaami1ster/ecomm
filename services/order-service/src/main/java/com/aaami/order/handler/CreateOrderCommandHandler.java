@@ -113,7 +113,7 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
         
         order.setItems(orderItems);
         order.setOrderTotal(orderTotal);
-        order.setStatus(com.aaami.shared.dto.OrderStatus.CONFIRMED);
+        // Order is created with PENDING status (already set above)
         
         Order savedOrder = orderRepository.save(order);
         log.info("Order created successfully with id: {} for user: {}", savedOrder.getId(), command.getUserId());

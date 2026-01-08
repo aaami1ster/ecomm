@@ -47,19 +47,37 @@ public class OrderGatewayController {
         return ResponseEntity.ok(orders);
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<OrderDto> updateOrder(
-            @PathVariable("id") Long id,
-            @RequestBody UpdateOrderCommand command) {
+    // @PutMapping("/{id}")
+    // public ResponseEntity<OrderDto> updateOrder(
+    //         @PathVariable("id") Long id,
+    //         @RequestBody UpdateOrderCommand command) {
+    //     command.setId(id);
+    //     OrderDto order = orderServiceClient.updateOrder(id, command);
+    //     return ResponseEntity.ok(order);
+    // }
+    
+    // @DeleteMapping("/{id}")
+    // public ResponseEntity<Void> deleteOrder(@PathVariable("id") Long id) {
+    //     orderServiceClient.deleteOrder(id);
+    //     return ResponseEntity.noContent().build();
+    // }
+    
+    @PutMapping("/{id}/confirm")
+    public ResponseEntity<OrderDto> confirmOrder(@PathVariable("id") Long id) {
+        UpdateOrderCommand command = new UpdateOrderCommand();
         command.setId(id);
+        command.setStatus(OrderStatus.CONFIRMED);
         OrderDto order = orderServiceClient.updateOrder(id, command);
         return ResponseEntity.ok(order);
     }
     
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable("id") Long id) {
-        orderServiceClient.deleteOrder(id);
-        return ResponseEntity.noContent().build();
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<OrderDto> cancelOrder(@PathVariable("id") Long id) {
+        UpdateOrderCommand command = new UpdateOrderCommand();
+        command.setId(id);
+        command.setStatus(OrderStatus.CANCELLED);
+        OrderDto order = orderServiceClient.updateOrder(id, command);
+        return ResponseEntity.ok(order);
     }
 }
 
