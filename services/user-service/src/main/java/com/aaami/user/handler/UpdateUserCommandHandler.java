@@ -5,6 +5,8 @@ import com.aaami.shared.command.UpdateUserCommand;
 import com.aaami.user.domain.User;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.user.mapper.UserMapper;
+import com.aaami.user.exception.DuplicateEmailException;
+import com.aaami.user.exception.UserNotFoundException;
 import com.aaami.user.repository.UserRepository;
 import com.aaami.user.service.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +25,11 @@ public class UpdateUserCommandHandler implements CommandHandler<UpdateUserComman
     @Transactional
     public UserDto handle(UpdateUserCommand command) {
         User user = userRepository.findById(command.getId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + command.getId()));
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + command.getId()));
         
         if (command.getEmail() != null && !command.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(command.getEmail())) {
-                throw new IllegalArgumentException("User with email " + command.getEmail() + " already exists");
+                throw new DuplicateEmailException("User with email " + command.getEmail() + " already exists");
             }
             user.setEmail(command.getEmail());
         }

@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "services")
 public class ServiceProperties {
-    private String productServiceUrl = "http://localhost:8081";
-    private String orderServiceUrl = "http://localhost:8082";
-    private String userServiceUrl = "http://localhost:8083";
+    private String productServiceUrl;
+    private String orderServiceUrl;
+    private String userServiceUrl;
 }
 

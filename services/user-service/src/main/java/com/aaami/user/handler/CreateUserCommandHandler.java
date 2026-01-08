@@ -5,6 +5,7 @@ import com.aaami.shared.command.CreateUserCommand;
 import com.aaami.user.domain.User;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.user.mapper.UserMapper;
+import com.aaami.user.exception.DuplicateEmailException;
 import com.aaami.user.repository.UserRepository;
 import com.aaami.user.service.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class CreateUserCommandHandler implements CommandHandler<CreateUserComman
 //        logger.info("Creating user: {}", command.getFirstName());
         log.debug("Received create request for {}", command.getFirstName());
         if (userRepository.existsByEmail(command.getEmail())) {
-            throw new IllegalArgumentException("User with email " + command.getEmail() + " already exists");
+            throw new DuplicateEmailException("User with email " + command.getEmail() + " already exists");
         }
         
         User user = User.builder()

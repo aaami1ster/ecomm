@@ -31,11 +31,12 @@ spring:
     baseline-on-migrate: true
     validate-on-migrate: true
     clean-disabled: true
-    # out-of-order: false
-    # table: flyway_schema_history
+    out-of-order: false
+    table: flyway_schema_history
 
 logging:
   level:
     root: INFO
     com.aaami: DEBUG
     org.hibernate.SQL: WARN
+    org.flywaydb: INFO

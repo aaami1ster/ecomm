@@ -2,6 +2,7 @@ package com.aaami.user.handler;
 
 import com.aaami.cqrs.QueryHandler;
 import com.aaami.shared.dto.UserDto;
+import com.aaami.user.exception.UserNotFoundException;
 import com.aaami.user.mapper.UserMapper;
 import com.aaami.user.query.GetUserQuery;
 import com.aaami.user.repository.UserRepository;
@@ -19,7 +20,7 @@ public class GetUserQueryHandler implements QueryHandler<GetUserQuery, UserDto> 
     public UserDto handle(GetUserQuery query) {
         return userRepository.findById(query.getId())
                 .map(userMapper::toDto)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + query.getId()));
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + query.getId()));
     }
 }
 

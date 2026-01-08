@@ -2,6 +2,7 @@ package com.aaami.user.handler;
 
 import com.aaami.cqrs.QueryHandler;
 import com.aaami.shared.dto.UserDto;
+import com.aaami.user.exception.UserNotFoundException;
 import com.aaami.user.mapper.UserMapper;
 import com.aaami.user.query.GetUserByEmailQuery;
 import com.aaami.user.repository.UserRepository;
@@ -19,7 +20,7 @@ public class GetUserByEmailQueryHandler implements QueryHandler<GetUserByEmailQu
     public UserDto handle(GetUserByEmailQuery query) {
         return userRepository.findByEmail(query.getEmail())
                 .map(userMapper::toDto)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + query.getEmail()));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + query.getEmail()));
     }
 }
 
