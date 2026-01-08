@@ -33,7 +33,6 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         
         <!-- Third-party versions -->
-        <nats.version>2.20.0</nats.version>
         <testcontainers.version>1.20.4</testcontainers.version>
         <springdoc.version>2.7.0</springdoc.version>
         <lombok.version>1.18.40</lombok.version>
@@ -58,13 +57,6 @@
                 <scope>import</scope>
             </dependency>
             
-            <!-- NATS Java Client -->
-            <dependency>
-                <groupId>io.nats</groupId>
-                <artifactId>jnats</artifactId>
-                <version>${nats.version}</version>
-            </dependency>
-            
             <!-- Testcontainers BOM -->
             <dependency>
                 <groupId>org.testcontainers</groupId>
@@ -75,12 +67,6 @@
             </dependency>
             
             <!-- Testcontainers modules (explicitly managed if not in BOM) -->
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>nats</artifactId>
-                <version>${testcontainers.version}</version>
-            </dependency>
-            
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>postgresql</artifactId>

@@ -4,3 +4,9 @@ server:
 spring:
   application:
     name: user-service
+
+logging:
+  level:
+    root: INFO
+    com.aaami: DEBUG
+    org.hibernate.SQL: WARN
