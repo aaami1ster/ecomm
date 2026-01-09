@@ -1,6 +1,6 @@
 # E-Commerce Microservices Platform
 
-A modern, scalable e-commerce platform built with Spring Boot microservices architecture, featuring JWT authentication, Redis session management, and comprehensive API documentation.
+A modern, scalable e-commerce platform built with Spring Boot microservices architecture, featuring stateless JWT authentication, Redis caching, and comprehensive API documentation.
 
 ## 📋 Table of Contents
 
@@ -23,7 +23,7 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
 ### Key Features
 
 - **Microservices Architecture**: Independent, scalable services for users, products, and orders
-- **JWT Authentication**: Secure token-based authentication with Redis session management
+- **Stateless JWT Authentication**: Secure token-based authentication without server-side session storage
 - **Role-Based Access Control (RBAC)**: Three-tier role system (USER, PREMIUM_USER, ADMIN)
 - **CQRS Pattern**: Command Query Responsibility Segregation for better separation of concerns
 - **RESTful APIs**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
@@ -68,7 +68,6 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
         │ - Cache     │
         │ - RateLimit │
         │ - Idempot.  │
-        │ - Sessions* │
         └─────────────┘
                │
                │
@@ -91,7 +90,6 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
 - **Responsibilities**:
   - Request routing to appropriate microservices
   - JWT token validation and authentication
-  - Session management with Redis
   - Role-based access control enforcement
   - API documentation (Swagger/OpenAPI)
 
@@ -151,16 +149,18 @@ The `shared` module contains:
 - **Maintainability**: Easier to understand and modify business logic
 - **Testability**: Commands and queries can be tested independently
 
-### 3. JWT with Redis Session Management
+### 3. Stateless JWT Authentication
 
-**Decision**: JWT tokens with Redis-backed session validation
+**Decision**: Pure stateless JWT authentication without server-side session storage
 
 **Rationale**:
-- **Stateless Authentication**: JWT tokens enable stateless authentication
-- **Session Revocation**: Redis allows immediate session invalidation on logout
-- **Performance**: Redis provides fast session lookups
-- **Scalability**: Redis can be clustered for high availability
-- **Security**: Ability to invalidate compromised tokens immediately
+- **True Statelessness**: No server-side session storage required - all authentication information is in the JWT token itself
+- **Scalability**: No need to share session state across servers, enabling horizontal scaling without sticky sessions
+- **Performance**: No Redis lookups required for authentication - token validation is purely cryptographic
+- **Simplicity**: Simpler architecture with fewer moving parts and dependencies
+- **Microservices Friendly**: Each service can validate tokens independently without shared state
+- **Client-Side Logout**: Logout is handled client-side by discarding the token (logout endpoint exists for API consistency)
+- **Token Expiration**: Security is maintained through token expiration times rather than server-side revocation
 
 ### 4. Database per Service
 
@@ -810,7 +810,7 @@ Recommended CI/CD pipeline:
 **Solutions**:
 - Verify JWT secret matches across services
 - Check token expiration
-- Verify Redis session exists
+- Verify JWT token is valid and not expired
 - Check token format (Bearer prefix)
 
 #### Database Connection Issues

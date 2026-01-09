@@ -1,9 +1,7 @@
 package com.aaami.gateway.controller;
 
 import com.aaami.gateway.client.UserServiceClient;
-import com.aaami.gateway.config.JwtProperties;
 import com.aaami.gateway.security.JwtTokenProvider;
-import com.aaami.gateway.service.SessionService;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.shared.dto.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,12 +34,6 @@ class AuthControllerTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private SessionService sessionService;
-
-    @Mock
-    private JwtProperties jwtProperties;
-
     @InjectMocks
     private AuthController controller;
 
@@ -69,8 +61,6 @@ class AuthControllerTest {
         String expectedToken = "test-jwt-token";
         when(userServiceClient.getUserByEmail(anyString())).thenReturn(userDto);
         when(tokenProvider.generateToken(any(), anyString(), any())).thenReturn(expectedToken);
-        when(jwtProperties.getExpiration()).thenReturn(86400000L); // 24 hours
-        doNothing().when(sessionService).createSession(anyString(), anyLong(), anyString(), any(), anyLong());
 
         // When
         ResponseEntity<Map<String, Object>> response = controller.login(loginRequest);
@@ -82,7 +72,6 @@ class AuthControllerTest {
         assertEquals("Bearer", response.getBody().get("type"));
         verify(userServiceClient).getUserByEmail(loginRequest.getEmail());
         verify(tokenProvider).generateToken(userDto.getId(), userDto.getEmail(), userDto.getRole());
-        verify(sessionService).createSession(expectedToken, userDto.getId(), userDto.getEmail(), userDto.getRole(), 86400000L);
     }
 
     @Test
