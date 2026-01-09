@@ -4,6 +4,8 @@ import com.aaami.product.domain.Product;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
 import com.aaami.product.service.ProductCacheService;
+import com.aaami.product.service.ProductEventProducer;
+import com.aaami.product.exception.DuplicateProductNameException;
 import com.aaami.shared.command.UpdateProductCommand;
 import com.aaami.shared.dto.ProductDto;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +35,9 @@ class UpdateProductCommandHandlerTest {
 
     @Mock
     private ProductCacheService productCacheService;
+
+    @Mock
+    private ProductEventProducer eventProducer;
 
     @InjectMocks
     private UpdateProductCommandHandler handler;
@@ -73,10 +78,12 @@ class UpdateProductCommandHandlerTest {
         command.setQuantity(20);
 
         when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(productRepository.existsByNameAndDeletedAtIsNull(anyString())).thenReturn(false);
         when(productRepository.save(any(Product.class))).thenReturn(product);
         when(productMapper.toDto(product)).thenReturn(productDto);
         doNothing().when(productCacheService).invalidateProduct(anyLong());
         doNothing().when(productCacheService).cacheProduct(any(ProductDto.class));
+        doNothing().when(eventProducer).publishProductUpdated(any(ProductDto.class));
 
         // When
         ProductDto result = handler.handle(command);
@@ -88,8 +95,10 @@ class UpdateProductCommandHandlerTest {
         assertEquals(new BigDecimal("149.99"), product.getPrice());
         assertEquals(20, product.getQuantity());
         verify(productRepository).findByIdAndDeletedAtIsNull(1L);
+        verify(productRepository).existsByNameAndDeletedAtIsNull("Updated Name");
         verify(productRepository).save(product);
         verify(productMapper).toDto(product);
+        verify(eventProducer).publishProductUpdated(any(ProductDto.class));
     }
 
     @Test
@@ -100,10 +109,12 @@ class UpdateProductCommandHandlerTest {
         // Other fields are null
 
         when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(productRepository.existsByNameAndDeletedAtIsNull(anyString())).thenReturn(false);
         when(productRepository.save(any(Product.class))).thenReturn(product);
         when(productMapper.toDto(product)).thenReturn(productDto);
         doNothing().when(productCacheService).invalidateProduct(anyLong());
         doNothing().when(productCacheService).cacheProduct(any(ProductDto.class));
+        doNothing().when(eventProducer).publishProductUpdated(any(ProductDto.class));
 
         // When
         handler.handle(command);
@@ -111,6 +122,7 @@ class UpdateProductCommandHandlerTest {
         // Then
         assertEquals("Updated Name", product.getName());
         assertEquals("Original Description", product.getDescription()); // Unchanged
+        verify(productRepository).existsByNameAndDeletedAtIsNull("Updated Name");
         verify(productRepository).save(product);
     }
 
@@ -125,6 +137,48 @@ class UpdateProductCommandHandlerTest {
         assertEquals("Product not found with id: 1", exception.getMessage());
         verify(productRepository).findByIdAndDeletedAtIsNull(1L);
         verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("Should throw DuplicateProductNameException when updating to an existing name")
+    void handle_ShouldThrowException_WhenUpdatingToExistingName() {
+        // Given
+        command.setName("Existing Product Name");
+        when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(productRepository.existsByNameAndDeletedAtIsNull("Existing Product Name")).thenReturn(true);
+
+        // When & Then
+        DuplicateProductNameException exception = assertThrows(
+                DuplicateProductNameException.class,
+                () -> handler.handle(command)
+        );
+        
+        assertEquals("Product with name 'Existing Product Name' already exists", exception.getMessage());
+        verify(productRepository).findByIdAndDeletedAtIsNull(1L);
+        verify(productRepository).existsByNameAndDeletedAtIsNull("Existing Product Name");
+        verify(productRepository, never()).save(any(Product.class));
+        verify(eventProducer, never()).publishProductUpdated(any(ProductDto.class));
+    }
+
+    @Test
+    @DisplayName("Should not check for duplicate when name is not changed")
+    void handle_ShouldNotCheckDuplicate_WhenNameUnchanged() {
+        // Given
+        command.setName("Original Name"); // Same as existing product name
+        command.setDescription("Updated Description");
+        when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(any(Product.class))).thenReturn(product);
+        when(productMapper.toDto(product)).thenReturn(productDto);
+        doNothing().when(productCacheService).invalidateProduct(anyLong());
+        doNothing().when(productCacheService).cacheProduct(any(ProductDto.class));
+        doNothing().when(eventProducer).publishProductUpdated(any(ProductDto.class));
+
+        // When
+        handler.handle(command);
+
+        // Then
+        verify(productRepository, never()).existsByNameAndDeletedAtIsNull(anyString());
+        verify(productRepository).save(product);
     }
 }
 

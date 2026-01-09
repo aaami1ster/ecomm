@@ -8,6 +8,7 @@ import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
 import com.aaami.product.service.ProductCacheService;
 import com.aaami.product.service.ProductEventProducer;
+import com.aaami.product.exception.DuplicateProductNameException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,11 @@ public class CreateProductCommandHandler implements CommandHandler<CreateProduct
     @Override
     @Transactional
     public ProductDto handle(CreateProductCommand command) {
+        // Check if product name already exists (for non-deleted products)
+        if (productRepository.existsByNameAndDeletedAtIsNull(command.getName())) {
+            throw new DuplicateProductNameException("Product with name '" + command.getName() + "' already exists");
+        }
+        
         Product product = Product.builder()
                 .name(command.getName())
                 .description(command.getDescription())

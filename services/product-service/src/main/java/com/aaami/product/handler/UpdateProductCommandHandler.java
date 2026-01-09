@@ -8,6 +8,7 @@ import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
 import com.aaami.product.service.ProductCacheService;
 import com.aaami.product.service.ProductEventProducer;
+import com.aaami.product.exception.DuplicateProductNameException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +28,11 @@ public class UpdateProductCommandHandler implements CommandHandler<UpdateProduct
         Product product = productRepository.findByIdAndDeletedAtIsNull(command.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + command.getId()));
         
-        if (command.getName() != null) {
+        if (command.getName() != null && !command.getName().equals(product.getName())) {
+            // Check if the new name already exists (excluding the current product)
+            if (productRepository.existsByNameAndDeletedAtIsNull(command.getName())) {
+                throw new DuplicateProductNameException("Product with name '" + command.getName() + "' already exists");
+            }
             product.setName(command.getName());
         }
         if (command.getDescription() != null) {

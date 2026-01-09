@@ -6,7 +6,10 @@ import com.aaami.product.domain.Product;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
 import com.aaami.product.service.ProductCacheService;
+import com.aaami.product.service.ProductEventProducer;
+import com.aaami.product.exception.DuplicateProductNameException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("CreateProductCommandHandler Tests")
 class CreateProductCommandHandlerTest {
 
     @Mock
@@ -30,6 +34,9 @@ class CreateProductCommandHandlerTest {
 
     @Mock
     private ProductCacheService productCacheService;
+
+    @Mock
+    private ProductEventProducer eventProducer;
 
     @InjectMocks
     private CreateProductCommandHandler handler;
@@ -64,11 +71,14 @@ class CreateProductCommandHandlerTest {
     }
 
     @Test
+    @DisplayName("Should create product when command is valid")
     void handle_ShouldCreateProduct_WhenCommandIsValid() {
         // Given
+        when(productRepository.existsByNameAndDeletedAtIsNull(anyString())).thenReturn(false);
         when(productRepository.save(any(Product.class))).thenReturn(product);
         when(productMapper.toDto(any(Product.class))).thenReturn(productDto);
         doNothing().when(productCacheService).cacheProduct(any(ProductDto.class));
+        doNothing().when(eventProducer).publishProductCreated(any(ProductDto.class));
 
         // When
         ProductDto result = handler.handle(command);
@@ -77,16 +87,21 @@ class CreateProductCommandHandlerTest {
         assertNotNull(result);
         assertEquals(productDto.getId(), result.getId());
         assertEquals(productDto.getName(), result.getName());
+        verify(productRepository).existsByNameAndDeletedAtIsNull(command.getName());
         verify(productRepository).save(any(Product.class));
         verify(productMapper).toDto(any(Product.class));
+        verify(eventProducer).publishProductCreated(any(ProductDto.class));
     }
 
     @Test
+    @DisplayName("Should map all fields correctly")
     void handle_ShouldMapAllFieldsCorrectly() {
         // Given
+        when(productRepository.existsByNameAndDeletedAtIsNull(anyString())).thenReturn(false);
         when(productRepository.save(any(Product.class))).thenReturn(product);
         when(productMapper.toDto(any(Product.class))).thenReturn(productDto);
         doNothing().when(productCacheService).cacheProduct(any(ProductDto.class));
+        doNothing().when(eventProducer).publishProductCreated(any(ProductDto.class));
 
         // When
         handler.handle(command);
@@ -98,6 +113,24 @@ class CreateProductCommandHandlerTest {
                 p.getPrice().equals(command.getPrice()) &&
                 p.getQuantity().equals(command.getQuantity())
         ));
+    }
+
+    @Test
+    @DisplayName("Should throw DuplicateProductNameException when product name already exists")
+    void handle_ShouldThrowException_WhenProductNameExists() {
+        // Given
+        when(productRepository.existsByNameAndDeletedAtIsNull(command.getName())).thenReturn(true);
+
+        // When & Then
+        DuplicateProductNameException exception = assertThrows(
+                DuplicateProductNameException.class,
+                () -> handler.handle(command)
+        );
+        
+        assertEquals("Product with name 'Test Product' already exists", exception.getMessage());
+        verify(productRepository).existsByNameAndDeletedAtIsNull(command.getName());
+        verify(productRepository, never()).save(any(Product.class));
+        verify(eventProducer, never()).publishProductCreated(any(ProductDto.class));
     }
 }
 

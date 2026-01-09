@@ -1,9 +1,12 @@
 package com.aaami.product.handler;
 
 import com.aaami.product.domain.Product;
+import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
 import com.aaami.product.service.ProductCacheService;
+import com.aaami.product.service.ProductEventProducer;
 import com.aaami.shared.command.DeleteProductCommand;
+import com.aaami.shared.dto.ProductDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,11 +33,18 @@ class DeleteProductCommandHandlerTest {
     @Mock
     private ProductCacheService productCacheService;
 
+    @Mock
+    private ProductMapper productMapper;
+
+    @Mock
+    private ProductEventProducer eventProducer;
+
     @InjectMocks
     private DeleteProductCommandHandler handler;
 
     private DeleteProductCommand command;
     private Product product;
+    private ProductDto productDto;
 
     @BeforeEach
     void setUp() {
@@ -48,6 +58,14 @@ class DeleteProductCommandHandlerTest {
                 .price(new BigDecimal("99.99"))
                 .quantity(10)
                 .build();
+
+        productDto = ProductDto.builder()
+                .id(1L)
+                .name("Test Product")
+                .description("Test Description")
+                .price(new BigDecimal("99.99"))
+                .quantity(10)
+                .build();
     }
 
     @Test
@@ -55,8 +73,10 @@ class DeleteProductCommandHandlerTest {
     void handle_ShouldSoftDeleteProduct_WhenProductExists() {
         // Given
         when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(productMapper.toDto(any(Product.class))).thenReturn(productDto);
         when(productRepository.save(any(Product.class))).thenReturn(product);
         doNothing().when(productCacheService).invalidateProduct(anyLong());
+        doNothing().when(eventProducer).publishProductDeleted(any(ProductDto.class));
 
         // When
         handler.handle(command);
