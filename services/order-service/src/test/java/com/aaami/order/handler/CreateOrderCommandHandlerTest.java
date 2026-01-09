@@ -15,6 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -97,13 +100,28 @@ class CreateOrderCommandHandlerTest {
     }
 
     @Test
-    void handle_ShouldThrowException_WhenProductNotFound() {
-        // Given
+    void handle_ShouldThrowIllegalStateException_WhenProductServiceFails() {
+        // Given - HttpClientErrorException extends RestClientException, so it's caught by the RestClientException handler
+        // which throws IllegalStateException (not IllegalArgumentException from NotFound handler)
         when(productServiceClient.getProduct(anyLong()))
-                .thenThrow(new org.springframework.web.client.HttpClientErrorException.NotFound("Not found", null, null, null));
+                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND, "Product not found"));
 
         // When & Then
-        assertThrows(IllegalArgumentException.class, () -> handler.handle(command));
+        // The handler catches RestClientException (parent of HttpClientErrorException) and throws IllegalStateException
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> handler.handle(command));
+        assertTrue(exception.getMessage().contains("Unable to fetch product details"));
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void handle_ShouldThrowIllegalStateException_WhenRestClientExceptionOccurs() {
+        // Given
+        when(productServiceClient.getProduct(anyLong()))
+                .thenThrow(new RestClientException("Service unavailable"));
+
+        // When & Then
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> handler.handle(command));
+        assertTrue(exception.getMessage().contains("Unable to fetch product details"));
         verify(orderRepository, never()).save(any(Order.class));
     }
 

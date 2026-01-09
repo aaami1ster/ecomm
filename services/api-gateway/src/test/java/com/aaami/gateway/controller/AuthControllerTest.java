@@ -72,9 +72,23 @@ class AuthControllerTest {
 
     @Test
     void login_ShouldReturnUnauthorized_WhenUserNotFound() {
-        // Given
+        // Given - Return null to simulate user not found
+        when(userServiceClient.getUserByEmail(anyString())).thenReturn(null);
+
+        // When
+        ResponseEntity<Map<String, Object>> response = controller.login(loginRequest);
+
+        // Then
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().containsKey("error"));
+    }
+
+    @Test
+    void login_ShouldReturnUnauthorized_WhenHttpClientErrorExceptionNotFound() {
+        // Given - Throw HttpClientErrorException with 404 status
         when(userServiceClient.getUserByEmail(anyString()))
-                .thenThrow(new HttpClientErrorException.NotFound("Not found", null, null, null));
+                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND, "Not found"));
 
         // When
         ResponseEntity<Map<String, Object>> response = controller.login(loginRequest);
