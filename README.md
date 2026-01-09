@@ -47,7 +47,7 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
 │ User  │ │Product│ │   Order   │
 │Service│ │Service│ │  Service  │
 │ :8083 │ │ :8081 │ │   :8082   │
-└───┬───┘ └───┬───┘ └─────┬─────┘
+└───┬───┘ └───┬───┘ └─────-┬────┘
     │         │            │
     └─────────┼────────────┘
               │
@@ -57,9 +57,9 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
     └───────────────────┘
               │
     ┌─────────▼─────────┐
-    │      Redis         │
-    │  (Session Cache)   │
-    └────────────────────┘
+    │      Redis        │
+    │  (Session Cache)  │
+    └───────────────────┘
 ```
 
 ### Service Responsibilities
