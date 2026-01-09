@@ -3,6 +3,7 @@ package com.aaami.product.controller;
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;
 import com.aaami.shared.command.CreateProductCommand;
+import com.aaami.shared.command.DecreaseProductQuantityCommand;
 import com.aaami.shared.command.DeleteProductCommand;
 import com.aaami.shared.command.UpdateProductCommand;
 import com.aaami.shared.dto.PaginatedResponse;
@@ -65,6 +66,15 @@ public class ProductController {
             @PathVariable("id") Long id,
             @RequestBody UpdateProductCommand command) {
         command.setId(id);
+        ProductDto product = commandBus.dispatch(command);
+        return ResponseEntity.ok(product);
+    }
+    
+    @PostMapping("/{id}/decrease-quantity")
+    public ResponseEntity<ProductDto> decreaseProductQuantity(
+            @PathVariable("id") Long productId,
+            @Valid @RequestBody DecreaseProductQuantityCommand command) {
+        command.setProductId(productId);
         ProductDto product = commandBus.dispatch(command);
         return ResponseEntity.ok(product);
     }

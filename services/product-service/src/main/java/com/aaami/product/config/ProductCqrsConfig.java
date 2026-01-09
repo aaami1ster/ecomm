@@ -3,6 +3,7 @@ package com.aaami.product.config;
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;
 import com.aaami.shared.command.CreateProductCommand;
+import com.aaami.shared.command.DecreaseProductQuantityCommand;
 import com.aaami.shared.command.DeleteProductCommand;
 import com.aaami.shared.command.UpdateProductCommand;
 import com.aaami.product.handler.*;
@@ -21,6 +22,7 @@ public class ProductCqrsConfig {
     private final QueryBus queryBus;
     private final CreateProductCommandHandler createProductCommandHandler;
     private final UpdateProductCommandHandler updateProductCommandHandler;
+    private final DecreaseProductQuantityCommandHandler decreaseProductQuantityCommandHandler;
     private final DeleteProductCommandHandler deleteProductCommandHandler;
     private final GetProductQueryHandler getProductQueryHandler;
     private final SearchProductsQueryHandler searchProductsQueryHandler;
@@ -30,6 +32,7 @@ public class ProductCqrsConfig {
         // Register command handlers
         commandBus.registerHandler(CreateProductCommand.class, createProductCommandHandler);
         commandBus.registerHandler(UpdateProductCommand.class, updateProductCommandHandler);
+        commandBus.registerHandler(DecreaseProductQuantityCommand.class, decreaseProductQuantityCommandHandler);
         commandBus.registerHandler(DeleteProductCommand.class, deleteProductCommandHandler);
         
         // Register query handlers

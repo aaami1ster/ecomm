@@ -115,8 +115,23 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
         order.setOrderTotal(orderTotal);
         // Order is created with PENDING status (already set above)
         
+        // Decrease product inventory for each item in the order BEFORE saving the order
+        // This ensures that if inventory decrease fails, the order won't be created
+        try {
+            for (OrderItem orderItem : orderItems) {
+                productServiceClient.decreaseProductQuantity(orderItem.getProductId(), orderItem.getQuantity());
+                log.debug("Decreased quantity for product {} by {}", orderItem.getProductId(), orderItem.getQuantity());
+            }
+            log.info("Successfully decreased inventory for all products before creating order");
+        } catch (Exception e) {
+            log.error("Failed to decrease inventory: {}", e.getMessage());
+            throw new IllegalStateException("Failed to update inventory: " + e.getMessage(), e);
+        }
+        
+        // Save the order after successfully decreasing inventory
         Order savedOrder = orderRepository.save(order);
         log.info("Order created successfully with id: {} for user: {}", savedOrder.getId(), command.getUserId());
+        
         return orderMapper.toDto(savedOrder);
     }
 }
