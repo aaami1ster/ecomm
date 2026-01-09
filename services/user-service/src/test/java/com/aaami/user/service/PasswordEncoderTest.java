@@ -20,7 +20,7 @@ class PasswordEncoderTest {
     @DisplayName("Should encode password using BCrypt")
     void encode_ShouldEncodePassword() {
         // Given
-        String rawPassword = "password123";
+        String rawPassword = "Password123";
 
         // When
         String encoded = passwordEncoder.encode(rawPassword);
@@ -38,7 +38,7 @@ class PasswordEncoderTest {
     @DisplayName("Should return true when password matches encoded password")
     void matches_ShouldReturnTrue_WhenPasswordMatches() {
         // Given
-        String rawPassword = "password123";
+        String rawPassword = "Password123";
         String encodedPassword = passwordEncoder.encode(rawPassword);
 
         // When
@@ -52,8 +52,8 @@ class PasswordEncoderTest {
     @DisplayName("Should return false when password does not match")
     void matches_ShouldReturnFalse_WhenPasswordDoesNotMatch() {
         // Given
-        String rawPassword = "password123";
-        String wrongPassword = "wrongPassword";
+        String rawPassword = "Password123";
+        String wrongPassword = "WrongPassword456";
         String encodedPassword = passwordEncoder.encode(rawPassword);
 
         // When
@@ -82,7 +82,7 @@ class PasswordEncoderTest {
     @DisplayName("Should return false when encoded password is null")
     void matches_ShouldReturnFalse_WhenEncodedPasswordIsNull() {
         // Given
-        String rawPassword = "password123";
+        String rawPassword = "Password123";
 
         // When
         boolean matches = passwordEncoder.matches(rawPassword, null);
@@ -95,7 +95,7 @@ class PasswordEncoderTest {
     @DisplayName("Should return false when raw password is null")
     void matches_ShouldReturnFalse_WhenRawPasswordIsNull() {
         // Given
-        String encodedPassword = passwordEncoder.encode("password123");
+        String encodedPassword = passwordEncoder.encode("Password123");
 
         // When
         boolean matches = passwordEncoder.matches(null, encodedPassword);
@@ -108,7 +108,7 @@ class PasswordEncoderTest {
     @DisplayName("Should generate different hashes for same password (salt variation)")
     void encode_ShouldGenerateDifferentHashes_ForSamePassword() {
         // Given
-        String rawPassword = "password123";
+        String rawPassword = "Password123";
 
         // When
         String encoded1 = passwordEncoder.encode(rawPassword);

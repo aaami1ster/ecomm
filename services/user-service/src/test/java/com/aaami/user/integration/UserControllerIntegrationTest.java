@@ -54,7 +54,7 @@ class UserControllerIntegrationTest {
         // Given
         CreateUserCommand command = new CreateUserCommand();
         command.setEmail("integration@test.com");
-        command.setPassword("password123");
+        command.setPassword("Password123");
         command.setFirstName("Integration");
         command.setLastName("Test");
         command.setRole(UserRole.USER);
@@ -75,7 +75,7 @@ class UserControllerIntegrationTest {
         // Given - Create a user first
         CreateUserCommand createCommand = new CreateUserCommand();
         createCommand.setEmail("getuser@test.com");
-        createCommand.setPassword("password123");
+        createCommand.setPassword("Password123");
         createCommand.setFirstName("Get");
         createCommand.setLastName("User");
 
@@ -99,7 +99,7 @@ class UserControllerIntegrationTest {
         // Given - Create a user first
         CreateUserCommand command = new CreateUserCommand();
         command.setEmail("list@test.com");
-        command.setPassword("password123");
+        command.setPassword("Password123");
         command.setFirstName("List");
         command.setLastName("User");
         restTemplate.postForEntity(baseUrl, command, UserDto.class);
