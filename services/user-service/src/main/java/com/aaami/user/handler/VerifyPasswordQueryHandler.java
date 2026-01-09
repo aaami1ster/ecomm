@@ -36,7 +36,9 @@ public class VerifyPasswordQueryHandler implements QueryHandler<VerifyPasswordQu
         // Verify password
         if (!passwordEncoder.matches(query.getPassword(), user.getPassword())) {
             log.warn("Password verification failed for user: {}", query.getEmail());
-            throw new IllegalArgumentException("Invalid email or password");
+            // Use UserNotFoundException for consistency with user not found case
+            // This provides a generic error message to prevent user enumeration
+            throw new UserNotFoundException("Invalid email or password");
         }
         
         log.debug("Password verification successful for user: {}", query.getEmail());

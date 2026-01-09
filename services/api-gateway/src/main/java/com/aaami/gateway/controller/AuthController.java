@@ -75,12 +75,8 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequest request) {
         try {
             // Verify password with user service (returns user if valid, throws exception if invalid)
+            // Note: verifyPassword() throws exception if invalid, never returns null
             UserDto user = userServiceClient.verifyPassword(request.getEmail(), request.getPassword());
-            
-            if (user == null) {
-                log.warn("Login attempt failed: User not found for email: {}", request.getEmail());
-                return ResponseEntity.status(401).body(createErrorResponse("Invalid email or password"));
-            }
             
             // Generate JWT token for authenticated user
             String token = tokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
@@ -139,14 +135,6 @@ public class AuthController {
         response.put("message", "Logged out successfully");
         log.info("Logout request received (stateless JWT - client should discard token)");
         return ResponseEntity.ok(response);
-    }
-    
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
     }
     
     private Map<String, Object> createErrorResponse(String message) {

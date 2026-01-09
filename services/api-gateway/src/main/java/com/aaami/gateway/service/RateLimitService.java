@@ -65,30 +65,24 @@ public class RateLimitService {
         try {
             ValueOperations<String, Object> ops = redisTemplate.opsForValue();
             
-            // Get current count
-            Object currentCountObj = ops.get(rateLimitKey);
-            int currentCount = currentCountObj != null ? ((Number) currentCountObj).intValue() : 0;
+            // Atomic operation: increment and get the new value
+            // If key doesn't exist, INCR creates it with value 1
+            Long newCount = ops.increment(rateLimitKey);
             
-            // Check if limit exceeded
-            if (currentCount >= maxRequests) {
+            // If this is the first request (newCount == 1), set expiration
+            if (newCount != null && newCount == 1) {
+                redisTemplate.expire(rateLimitKey, windowMinutes, TimeUnit.MINUTES);
+            }
+            
+            // Check if limit exceeded after increment
+            if (newCount != null && newCount > maxRequests) {
                 log.warn("Rate limit exceeded for key: {} ({} requests in {} minutes)", 
-                    key, currentCount, windowMinutes);
+                    key, newCount, windowMinutes);
                 return false;
             }
             
-            // Increment counter
-            // If key doesn't exist, set it with expiration
-            // If key exists, increment it (expiration is preserved)
-            if (currentCount == 0) {
-                // First request in the window - set with expiration
-                ops.set(rateLimitKey, 1, windowMinutes, TimeUnit.MINUTES);
-            } else {
-                // Increment existing counter
-                ops.increment(rateLimitKey);
-            }
-            
             log.debug("Rate limit check passed for key: {} (count: {}/{})", 
-                key, currentCount + 1, maxRequests);
+                key, newCount, maxRequests);
             return true;
             
         } catch (Exception e) {
@@ -115,6 +109,24 @@ public class RateLimitService {
         } catch (Exception e) {
             log.error("Error getting remaining requests for key: {}", key, e);
             return maxRequests; // Return max on error
+        }
+    }
+    
+    /**
+     * Gets the current request count for a key.
+     * 
+     * @param key The rate limit key
+     * @return Current request count, or 0 if key doesn't exist
+     */
+    public int getCurrentCount(String key) {
+        String rateLimitKey = buildRateLimitKey(key);
+        
+        try {
+            Object currentCountObj = redisTemplate.opsForValue().get(rateLimitKey);
+            return currentCountObj != null ? ((Number) currentCountObj).intValue() : 0;
+        } catch (Exception e) {
+            log.error("Error getting current count for key: {}", key, e);
+            return 0;
         }
     }
     

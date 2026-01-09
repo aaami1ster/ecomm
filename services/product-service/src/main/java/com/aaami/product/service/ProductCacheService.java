@@ -4,9 +4,13 @@ import com.aaami.shared.dto.ProductDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -90,12 +94,29 @@ public class ProductCacheService {
     /**
      * Invalidates all product caches (use with caution).
      * This is useful for bulk operations or cache warming scenarios.
+     * 
+     * Note: Uses SCAN instead of KEYS to avoid blocking Redis in production.
      */
     public void invalidateAllProducts() {
         try {
-            // Use pattern matching to find all product keys
-            var keys = redisTemplate.keys(CACHE_KEY_PREFIX + "*");
-            if (keys != null && !keys.isEmpty()) {
+            // Use SCAN instead of KEYS to avoid blocking Redis
+            // SCAN is non-blocking and safe for production use
+            Set<String> keys = new HashSet<>();
+            String pattern = CACHE_KEY_PREFIX + "*";
+            
+            // Use SCAN with cursor-based iteration
+            try (Cursor<String> cursor = redisTemplate.scan(
+                ScanOptions.scanOptions()
+                    .match(pattern)
+                    .count(100) // Process 100 keys at a time
+                    .build()
+            )) {
+                while (cursor.hasNext()) {
+                    keys.add(cursor.next());
+                }
+            }
+            
+            if (!keys.isEmpty()) {
                 redisTemplate.delete(keys);
                 log.info("Invalidated {} product cache entries", keys.size());
             }

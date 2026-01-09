@@ -5,18 +5,34 @@ import com.aaami.shared.dto.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider {
     
     private final JwtProperties jwtProperties;
+    
+    @PostConstruct
+    public void validateSecret() {
+        String secret = jwtProperties.getSecret();
+        if (secret == null || secret.length() < 32) {
+            log.error("JWT secret is too short ({} characters). Minimum 32 characters required for security.", 
+                secret != null ? secret.length() : 0);
+            throw new IllegalStateException(
+                "JWT secret must be at least 32 characters long. " +
+                "Please set JWT_SECRET environment variable with a strong secret key.");
+        }
+        log.debug("JWT secret validation passed (length: {})", secret.length());
+    }
     
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);

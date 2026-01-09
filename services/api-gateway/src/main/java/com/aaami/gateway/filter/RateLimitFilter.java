@@ -50,10 +50,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 response.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
                 response.setHeader("Retry-After", String.valueOf(rateLimitService.getWindowMinutes() * 60));
                 
-                response.getWriter().write(
-                    String.format("{\"error\":\"Rate limit exceeded. Please try again after %d minutes.\"}", 
-                        rateLimitService.getWindowMinutes())
-                );
+                try {
+                    response.getWriter().write(
+                        String.format("{\"error\":\"Rate limit exceeded. Please try again after %d minutes.\"}", 
+                            rateLimitService.getWindowMinutes())
+                    );
+                } catch (IOException e) {
+                    log.error("Error writing rate limit response", e);
+                }
                 log.warn("Rate limit exceeded for IP: {}", clientIp);
                 return;
             }
