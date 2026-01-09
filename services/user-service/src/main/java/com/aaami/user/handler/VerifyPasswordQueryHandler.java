@@ -34,6 +34,9 @@ public class VerifyPasswordQueryHandler implements QueryHandler<VerifyPasswordQu
                 });
         
         // Verify password
+        // Note: passwordEncoder.matches() is designed to compare plaintext (query.getPassword())
+        // with hashed (user.getPassword()). It extracts the salt from the hash, hashes the
+        // plaintext with that salt, and compares the results. This is the correct usage.
         if (!passwordEncoder.matches(query.getPassword(), user.getPassword())) {
             log.warn("Password verification failed for user: {}", query.getEmail());
             // Use UserNotFoundException for consistency with user not found case
