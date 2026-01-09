@@ -38,28 +38,50 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        API Gateway                          │
-│  (Port 8080) - Authentication, Routing, Security            │
-└──────────────┬──────────────────────────────────────────────┘
+│  (Port 8080)                                                │
+│  - Authentication (JWT / OAuth2)                            │
+│  - Authorization (RBAC)                                     │
+│  - Rate Limiting                                            │
+│  - Routing                                                  │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+    ┌──────────----┼──────────┐
+    │              │          │
+┌───▼────────┐ ┌───▼────────┐ ┌───▼────────┐
+│ User       │ │ Product    │ │ Order      │
+│ Service    │ │ Service    │ │ Service    │
+│ :8083      │ │ :8081      │ │ :8082      │
+│            │ │            │ │            │
+│ Owns DB    │ │ Owns DB    │ │ Owns DB    │
+└───┬────────┘ └───┬────────┘ └───┬────────┘
+    │              │              │
+    │              │              │
+┌───▼────────┐ ┌───▼────────┐ ┌───▼────────┐
+│ user_db    │ │ product_db │ │ order_db   │
+│ PostgreSQL │ │ PostgreSQL │ │ PostgreSQL │
+└────────────┘ └────────────┘ └────────────┘
                │
-    ┌──────────┼──────────┐
-    │          │          │
-┌───▼───┐ ┌───▼───┐ ┌─────▼─────┐
-│ User  │ │Product│ │   Order   │
-│Service│ │Service│ │  Service  │
-│ :8083 │ │ :8081 │ │   :8082   │
-└───┬───┘ └───┬───┘ └─────-┬────┘
-    │         │            │
-    └─────────┼────────────┘
-              │
-    ┌─────────▼─────────┐
-    │   PostgreSQL      │
-    │  (Multi-Database) │
-    └───────────────────┘
-              │
-    ┌─────────▼─────────┐
-    │      Redis        │
-    │  (Session Cache)  │
-    └───────────────────┘
+               │
+        ┌──────▼──────┐
+        │   Redis     │
+        │             │
+        │ - Cache     │
+        │ - RateLimit │
+        │ - Idempot.  │
+        │ - Sessions* │
+        └─────────────┘
+               │
+               │
+        ┌──────▼──────┐
+        │ Event Bus   │
+        │ (NATS /     │
+        │  Kafka)     │
+        │             │
+        │ - UserEvents│
+        │ - ProductEv │
+        │ - OrderEv   │
+        └─────────────┘
+ 
 ```
 
 ### Service Responsibilities
