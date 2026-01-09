@@ -214,6 +214,34 @@ The `shared` module contains:
 - **Maintainability**: Clear, single-responsibility classes for each discount type
 - **Testability**: Each rule can be unit tested independently
 
+### 9. Idempotency Key for Order Creation
+
+**Decision**: Optional idempotency key support for order creation using Redis caching
+
+**Rationale**:
+- **Prevent Duplicate Orders**: Network retries, user double-clicks, or system failures can cause duplicate order submissions. Idempotency keys ensure the same request creates only one order
+- **Improved User Experience**: Users can safely retry failed requests without worrying about creating duplicate orders
+- **Data Integrity**: Prevents accidental duplicate charges and inventory issues
+- **Redis as Cache Store**: 
+  - **Performance**: Redis provides sub-millisecond lookups, ensuring minimal latency impact
+  - **TTL Support**: Built-in expiration (24 hours) automatically cleans up old keys
+  - **Distributed**: Works seamlessly in distributed/microservices environments
+  - **Scalability**: Redis can handle high-throughput idempotency checks
+- **Optional Implementation**: 
+  - **Flexibility**: Clients can choose when to use idempotency (e.g., for critical operations)
+  - **Backward Compatibility**: Existing clients without idempotency keys continue to work
+  - **Best-Effort**: Idempotency failures don't block order creation (graceful degradation)
+- **24-Hour Expiration**: 
+  - **Balance**: Long enough to handle retries and network issues, short enough to prevent stale data
+  - **Configurable**: Expiration time can be adjusted via `idempotency.key.expiration-hours` property
+- **Key Format**: Uses prefix `idempotency:order:` for namespace isolation and easy key management
+
+**Implementation Details**:
+- Idempotency key is checked **before** any order processing begins
+- If a cached order exists, it's returned immediately without database operations
+- If no cached order exists, the order is created normally and then cached
+- Cache operations are wrapped in try-catch to ensure order creation succeeds even if Redis is unavailable
+
 ## 📦 Prerequisites
 
 ### Required Software
@@ -463,14 +491,12 @@ Authorization: Bearer {token}
 
 #### Order Endpoints
 
-| Method | Endpoint                    | Description                | Roles                     |
-| ------ | --------------------------- | -------------------------- | ------------------------- |
-| POST   | `/api/orders`               | Create order               | USER, PREMIUM_USER, ADMIN |
-| GET    | `/api/orders`               | Get all orders (paginated) | USER, PREMIUM_USER, ADMIN |
-| GET    | `/api/orders/{id}`          | Get order by ID            | USER, PREMIUM_USER, ADMIN |
-| GET    | `/api/orders/user/{userId}` | Get user orders            | USER, PREMIUM_USER, ADMIN |
-| PUT    | `/api/orders/{id}/confirm`  | Confirm order              | USER, PREMIUM_USER, ADMIN |
-| PUT    | `/api/orders/{id}/cancel`   | Cancel order               | USER, PREMIUM_USER, ADMIN |
+| Method | Endpoint                    | Description                                 | Roles                     |
+| ------ | --------------------------- | ------------------------------------------- | ------------------------- |
+| POST   | `/api/orders`               | Create order (with idempotency key support) | USER, PREMIUM_USER, ADMIN |
+| GET    | `/api/orders`               | Get all orders (paginated)                  | USER, PREMIUM_USER, ADMIN |
+| GET    | `/api/orders/{id}`          | Get order by ID                             | USER, PREMIUM_USER, ADMIN |
+| GET    | `/api/orders/user/{userId}` | Get user orders                             | USER, PREMIUM_USER, ADMIN |
 
 ### Role-Based Access Control
 
@@ -602,12 +628,15 @@ curl -X POST http://localhost:8080/api/products \
 
 #### Create an Order
 
+Orders are created with **CONFIRMED** status immediately, and product inventory is decreased automatically. You can optionally provide an `idempotencyKey` to prevent duplicate orders:
+
 ```bash
 curl -X POST http://localhost:8080/api/orders \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
     "userId": 1,
+    "idempotencyKey": "unique-key-123",
     "items": [
       {
         "productId": 1,
@@ -616,6 +645,12 @@ curl -X POST http://localhost:8080/api/orders \
     ]
   }'
 ```
+
+**Note**: 
+- Orders are created with **CONFIRMED** status immediately (no separate confirmation step)
+- Product inventory is automatically decreased upon order creation
+- If you send the same request with the same `idempotencyKey` within 24 hours, the system will return the previously created order instead of creating a duplicate
+- The `idempotencyKey` is optional; if not provided, each request will create a new order
 
 ## 🧪 Testing
 

@@ -2,8 +2,6 @@ package com.aaami.gateway.controller;
 
 import com.aaami.gateway.client.OrderServiceClient;
 import com.aaami.shared.command.CreateOrderCommand;
-import com.aaami.shared.command.DeleteOrderCommand;
-import com.aaami.shared.command.UpdateOrderCommand;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.OrderStatus;
 import com.aaami.shared.dto.PaginatedResponse;
@@ -33,7 +31,7 @@ public class OrderGatewayController {
     
     @Operation(
             summary = "Create a new order",
-            description = "Creates a new order with the specified items. Product inventory is automatically decreased upon successful order creation. Available to all authenticated users.",
+            description = "Creates a new order with the specified items. Product inventory is automatically decreased upon successful order creation. Orders are created with CONFIRMED status. Supports idempotency key to prevent duplicate orders. Available to all authenticated users.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -45,6 +43,11 @@ public class OrderGatewayController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid input data or insufficient stock",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Duplicate request detected (same idempotency key used)",
                     content = @Content
             ),
             @ApiResponse(
@@ -149,95 +152,5 @@ public class OrderGatewayController {
         return ResponseEntity.ok(orders);
     }
     
-    // @PutMapping("/{id}")
-    // public ResponseEntity<OrderDto> updateOrder(
-    //         @PathVariable("id") Long id,
-    //         @RequestBody UpdateOrderCommand command) {
-    //     command.setId(id);
-    //     OrderDto order = orderServiceClient.updateOrder(id, command);
-    //     return ResponseEntity.ok(order);
-    // }
-    
-    // @DeleteMapping("/{id}")
-    // public ResponseEntity<Void> deleteOrder(@PathVariable("id") Long id) {
-    //     orderServiceClient.deleteOrder(id);
-    //     return ResponseEntity.noContent().build();
-    // }
-    
-    @Operation(
-            summary = "Confirm an order",
-            description = "Confirms a pending order, changing its status to CONFIRMED. Available to all authenticated users.",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Order confirmed successfully",
-                    content = @Content(schema = @Schema(implementation = OrderDto.class))
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Order not found",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Order cannot be confirmed (invalid status)",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Unauthorized - Missing or invalid JWT token",
-                    content = @Content
-            )
-    })
-    @PutMapping("/{id}/confirm")
-    public ResponseEntity<OrderDto> confirmOrder(
-            @Parameter(description = "Order ID", example = "1", required = true)
-            @PathVariable("id") Long id) {
-        UpdateOrderCommand command = new UpdateOrderCommand();
-        command.setId(id);
-        command.setStatus(OrderStatus.CONFIRMED);
-        OrderDto order = orderServiceClient.updateOrder(id, command);
-        return ResponseEntity.ok(order);
-    }
-    
-    @Operation(
-            summary = "Cancel an order",
-            description = "Cancels an order, changing its status to CANCELLED. Available to all authenticated users.",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Order cancelled successfully",
-                    content = @Content(schema = @Schema(implementation = OrderDto.class))
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Order not found",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Order cannot be cancelled (invalid status)",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Unauthorized - Missing or invalid JWT token",
-                    content = @Content
-            )
-    })
-    @PutMapping("/{id}/cancel")
-    public ResponseEntity<OrderDto> cancelOrder(
-            @Parameter(description = "Order ID", example = "1", required = true)
-            @PathVariable("id") Long id) {
-        UpdateOrderCommand command = new UpdateOrderCommand();
-        command.setId(id);
-        command.setStatus(OrderStatus.CANCELLED);
-        OrderDto order = orderServiceClient.updateOrder(id, command);
-        return ResponseEntity.ok(order);
-    }
 }
 

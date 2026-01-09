@@ -12,6 +12,7 @@ import com.aaami.shared.dto.ProductDto;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.order.mapper.OrderMapper;
 import com.aaami.order.repository.OrderRepository;
+import com.aaami.order.service.IdempotencyService;
 import com.aaami.discount.DiscountService;
 import com.aaami.shared.dto.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
     private final DiscountService discountService;
     private final ProductServiceClient productServiceClient;
     private final UserServiceClient userServiceClient;
+    private final IdempotencyService idempotencyService;
     
     private UserRole getUserRole(Long userId) {
         try {
@@ -58,6 +60,15 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
     @Override
     @Transactional
     public OrderDto handle(CreateOrderCommand command) {
+        // Check idempotency key first
+        if (command.getIdempotencyKey() != null && !command.getIdempotencyKey().isEmpty()) {
+            OrderDto cachedOrder = idempotencyService.getCachedOrder(command.getIdempotencyKey());
+            if (cachedOrder != null) {
+                log.info("Returning cached order for idempotency key: {}", command.getIdempotencyKey());
+                return cachedOrder;
+            }
+        }
+        
         Order order = Order.builder()
                 .userId(command.getUserId())
                 .status(com.aaami.shared.dto.OrderStatus.PENDING)
@@ -134,7 +145,8 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
         
         order.setItems(orderItems);
         order.setOrderTotal(orderTotal);
-        // Order is created with PENDING status (already set above)
+        // Update the order status to CONFIRMED
+        order.setStatus(com.aaami.shared.dto.OrderStatus.CONFIRMED);
         
         // Decrease product inventory for each item in the order BEFORE saving the order
         // This ensures that if inventory decrease fails, the order won't be created
@@ -151,9 +163,16 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
         
         // Save the order after successfully decreasing inventory
         Order savedOrder = orderRepository.save(order);
-        log.info("Order created successfully with id: {} for user: {}", savedOrder.getId(), command.getUserId());
+        log.info("Order created successfully with id: {} for user: {} with status: CONFIRMED", savedOrder.getId(), command.getUserId());
         
-        return orderMapper.toDto(savedOrder);
+        OrderDto orderDto = orderMapper.toDto(savedOrder);
+        
+        // Cache the order with idempotency key if provided
+        if (command.getIdempotencyKey() != null && !command.getIdempotencyKey().isEmpty()) {
+            idempotencyService.cacheOrder(command.getIdempotencyKey(), orderDto);
+        }
+        
+        return orderDto;
     }
 }
 

@@ -21,5 +21,11 @@ public class CreateOrderCommand implements Command<OrderDto> {
     @NotEmpty(message = "Order must have at least one item")
     @Valid
     private List<OrderItemCommand> items;
+    
+    /**
+     * Idempotency key to prevent duplicate order creation.
+     * If provided, the same order will be returned for duplicate requests with the same key.
+     */
+    private String idempotencyKey;
 }
 

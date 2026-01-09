@@ -7,8 +7,10 @@ import com.aaami.order.client.UserServiceClient;
 import com.aaami.order.domain.Order;
 import com.aaami.order.mapper.OrderMapper;
 import com.aaami.order.repository.OrderRepository;
+import com.aaami.order.service.IdempotencyService;
 import com.aaami.discount.DiscountService;
 import com.aaami.shared.dto.OrderDto;
+import com.aaami.shared.dto.OrderStatus;
 import com.aaami.shared.dto.ProductDto;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.shared.dto.UserRole;
@@ -47,6 +49,9 @@ class CreateOrderCommandHandlerTest {
 
     @Mock
     private UserServiceClient userServiceClient;
+
+    @Mock
+    private IdempotencyService idempotencyService;
 
     @InjectMocks
     private CreateOrderCommandHandler handler;
@@ -93,6 +98,7 @@ class CreateOrderCommandHandlerTest {
                 .role(UserRole.USER)
                 .build();
         
+        lenient().when(idempotencyService.getCachedOrder(anyString())).thenReturn(null);
         when(userServiceClient.getUser(anyLong())).thenReturn(userDto);
         when(productServiceClient.getProduct(anyLong())).thenReturn(productDto);
         when(discountService.calculateDiscount(any(BigDecimal.class), any(UserRole.class))).thenReturn(BigDecimal.ZERO);
@@ -108,13 +114,68 @@ class CreateOrderCommandHandlerTest {
         verify(userServiceClient).getUser(1L);
         verify(productServiceClient).getProduct(1L);
         verify(productServiceClient).decreaseProductQuantity(1L, 2);
-        verify(orderRepository).save(any(Order.class));
+        verify(orderRepository).save(argThat(o -> o.getStatus() == OrderStatus.CONFIRMED));
+    }
+
+    @Test
+    void handle_ShouldReturnCachedOrder_WhenIdempotencyKeyExists() {
+        // Given
+        String idempotencyKey = "test-key-123";
+        command.setIdempotencyKey(idempotencyKey);
+        
+        OrderDto cachedOrderDto = OrderDto.builder()
+                .id(1L)
+                .userId(1L)
+                .status(OrderStatus.CONFIRMED)
+                .build();
+        
+        when(idempotencyService.getCachedOrder(idempotencyKey)).thenReturn(cachedOrderDto);
+
+        // When
+        OrderDto result = handler.handle(command);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals(OrderStatus.CONFIRMED, result.getStatus());
+        verify(idempotencyService).getCachedOrder(idempotencyKey);
+        verify(userServiceClient, never()).getUser(anyLong());
+        verify(productServiceClient, never()).getProduct(anyLong());
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void handle_ShouldCacheOrder_WhenIdempotencyKeyProvided() {
+        // Given
+        String idempotencyKey = "test-key-456";
+        command.setIdempotencyKey(idempotencyKey);
+        
+        UserDto userDto = UserDto.builder()
+                .id(1L)
+                .email("user@example.com")
+                .role(UserRole.USER)
+                .build();
+        
+        when(idempotencyService.getCachedOrder(idempotencyKey)).thenReturn(null);
+        when(userServiceClient.getUser(anyLong())).thenReturn(userDto);
+        when(productServiceClient.getProduct(anyLong())).thenReturn(productDto);
+        when(discountService.calculateDiscount(any(BigDecimal.class), any(UserRole.class))).thenReturn(BigDecimal.ZERO);
+        when(productServiceClient.decreaseProductQuantity(anyLong(), any())).thenReturn(productDto);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(orderMapper.toDto(any(Order.class))).thenReturn(orderDto);
+
+        // When
+        handler.handle(command);
+
+        // Then
+        verify(idempotencyService).cacheOrder(idempotencyKey, orderDto);
     }
 
     @Test
     void handle_ShouldThrowIllegalStateException_WhenProductServiceFails() {
         // Given - HttpClientErrorException extends RestClientException, so it's caught by the RestClientException handler
         // which throws IllegalStateException (not IllegalArgumentException from NotFound handler)
+        lenient().when(idempotencyService.getCachedOrder(anyString())).thenReturn(null);
         when(productServiceClient.getProduct(anyLong()))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND, "Product not found"));
 
@@ -128,6 +189,7 @@ class CreateOrderCommandHandlerTest {
     @Test
     void handle_ShouldThrowIllegalStateException_WhenRestClientExceptionOccurs() {
         // Given
+        lenient().when(idempotencyService.getCachedOrder(anyString())).thenReturn(null);
         when(productServiceClient.getProduct(anyLong()))
                 .thenThrow(new RestClientException("Service unavailable"));
 
@@ -141,6 +203,7 @@ class CreateOrderCommandHandlerTest {
     void handle_ShouldThrowException_WhenInsufficientStock() {
         // Given
         productDto.setQuantity(1); // Less than requested
+        lenient().when(idempotencyService.getCachedOrder(anyString())).thenReturn(null);
         when(productServiceClient.getProduct(anyLong())).thenReturn(productDto);
 
         // When & Then
@@ -159,6 +222,7 @@ class CreateOrderCommandHandlerTest {
                 .role(UserRole.USER)
                 .build();
         
+        lenient().when(idempotencyService.getCachedOrder(anyString())).thenReturn(null);
         when(userServiceClient.getUser(anyLong())).thenReturn(userDto);
         when(productServiceClient.getProduct(anyLong())).thenReturn(productDto);
         when(discountService.calculateDiscount(any(BigDecimal.class), any(UserRole.class))).thenReturn(BigDecimal.ZERO);
@@ -176,7 +240,7 @@ class CreateOrderCommandHandlerTest {
         // Then
         verify(orderRepository).save(argThat(o -> {
             BigDecimal expectedTotal = new BigDecimal("50.00").multiply(new BigDecimal("2"));
-            return o.getOrderTotal().compareTo(expectedTotal) == 0;
+            return o.getOrderTotal().compareTo(expectedTotal) == 0 && o.getStatus() == OrderStatus.CONFIRMED;
         }));
     }
 }

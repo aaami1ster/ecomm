@@ -34,6 +34,16 @@ spring:
     out-of-order: false
     table: flyway_schema_history
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+
 services:
   product-service-url: ${SERVICES_PRODUCT_SERVICE_URL:http://localhost:8081}
   user-service-url: ${SERVICES_USER_SERVICE_URL:http://localhost:8083}
+
+idempotency:
+  key:
+    expiration-hours: 24
