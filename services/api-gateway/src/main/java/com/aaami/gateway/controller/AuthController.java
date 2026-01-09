@@ -2,6 +2,8 @@ package com.aaami.gateway.controller;
 
 import com.aaami.gateway.client.UserServiceClient;
 import com.aaami.gateway.security.JwtTokenProvider;
+import com.aaami.gateway.service.SessionService;
+import com.aaami.gateway.config.JwtProperties;
 import com.aaami.shared.dto.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,12 +31,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "Authentication endpoints for user login")
+@Tag(name = "Authentication", description = "Authentication endpoints for user login and logout")
 public class AuthController {
     
     private final UserServiceClient userServiceClient;
     private final JwtTokenProvider tokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final SessionService sessionService;
+    private final JwtProperties jwtProperties;
     
     @Operation(
             summary = "User login",
@@ -92,6 +97,9 @@ public class AuthController {
             // TODO: Add proper password verification endpoint to user service
             String token = tokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
             
+            // Create session in Redis
+            sessionService.createSession(token, user.getId(), user.getEmail(), user.getRole(), jwtProperties.getExpiration());
+            
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
             response.put("type", "Bearer");
@@ -101,7 +109,7 @@ public class AuthController {
                 "role", user.getRole().name()
             ));
             
-            log.info("User {} logged in successfully", user.getEmail());
+            log.info("User {} logged in successfully and session created", user.getEmail());
             return ResponseEntity.ok(response);
         } catch (HttpClientErrorException.NotFound e) {
             log.warn("Login attempt with non-existent email");
@@ -110,6 +118,57 @@ public class AuthController {
             log.error("Error during login", e);
             return ResponseEntity.status(401).body(createErrorResponse("Invalid email or password"));
         }
+    }
+    
+    @Operation(
+            summary = "User logout",
+            description = "Logs out the current user by invalidating their session in Redis. Requires authentication. The JWT token must be included in the Authorization header."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Logout successful",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\n" +
+                                            "  \"message\": \"Logged out successfully\"\n" +
+                                            "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - Missing or invalid JWT token",
+                    content = @Content
+            )
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request) {
+        try {
+            String token = getJwtFromRequest(request);
+            if (token != null) {
+                sessionService.invalidateSession(token);
+                log.info("User logged out successfully");
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Logged out successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error during logout", e);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Logged out successfully");
+            return ResponseEntity.ok(response);
+        }
+    }
+    
+    private String getJwtFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
     
     private Map<String, Object> createErrorResponse(String message) {

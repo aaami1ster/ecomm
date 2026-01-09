@@ -1,5 +1,6 @@
 package com.aaami.gateway.security;
 
+import com.aaami.gateway.service.SessionService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     private final JwtTokenProvider tokenProvider;
+    private final SessionService sessionService;
     
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -31,17 +33,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
             
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                Long userId = tokenProvider.getUserIdFromToken(jwt);
-                String email = tokenProvider.getEmailFromToken(jwt);
-                String role = tokenProvider.getRoleFromToken(jwt).name();
-                
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userId,
-                    email,
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
-                );
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                // Check if session exists in Redis
+                if (sessionService.isValidSession(jwt)) {
+                    // Get session info from Redis (or fallback to token claims)
+                    SessionService.SessionInfo sessionInfo = sessionService.getSession(jwt);
+                    
+                    Long userId;
+                    String email;
+                    String role;
+                    
+                    if (sessionInfo != null) {
+                        userId = sessionInfo.getUserId();
+                        email = sessionInfo.getEmail();
+                        role = sessionInfo.getRole().name();
+                    } else {
+                        // Fallback to token claims if session not found (shouldn't happen normally)
+                        userId = tokenProvider.getUserIdFromToken(jwt);
+                        email = tokenProvider.getEmailFromToken(jwt);
+                        role = tokenProvider.getRoleFromToken(jwt).name();
+                    }
+                    
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userId,
+                        email,
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
+                    );
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    log.debug("Session not found in Redis for token, authentication skipped");
+                }
             }
         } catch (Exception ex) {
             log.error("Could not set user authentication in security context", ex);
