@@ -51,7 +51,7 @@ class CreateUserCommandHandlerTest {
         user = User.builder()
                 .id(1L)
                 .email("test@example.com")
-                .password("encoded_password123")
+                .password("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy") // BCrypt hash for password123
                 .firstName("John")
                 .lastName("Doe")
                 .role(UserRole.USER)
@@ -70,7 +70,7 @@ class CreateUserCommandHandlerTest {
     void handle_ShouldCreateUser_WhenEmailDoesNotExist() {
         // Given
         when(userRepository.existsByEmailAndDeletedAtIsNull(anyString())).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("encoded_password123");
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"); // BCrypt hash
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
 
@@ -103,7 +103,7 @@ class CreateUserCommandHandlerTest {
         // Given
         command.setRole(null);
         when(userRepository.existsByEmailAndDeletedAtIsNull(anyString())).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("encoded_password123");
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"); // BCrypt hash
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
 
@@ -119,7 +119,7 @@ class CreateUserCommandHandlerTest {
         // Given
         command.setRole(UserRole.ADMIN);
         when(userRepository.existsByEmailAndDeletedAtIsNull(anyString())).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("encoded_password123");
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"); // BCrypt hash
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
 

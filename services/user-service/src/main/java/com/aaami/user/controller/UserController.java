@@ -11,6 +11,7 @@ import com.aaami.shared.dto.UserRole;
 import com.aaami.user.query.GetAllUsersQuery;
 import com.aaami.user.query.GetUserByEmailQuery;
 import com.aaami.user.query.GetUserQuery;
+import com.aaami.user.query.VerifyPasswordQuery;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -65,6 +66,12 @@ public class UserController {
     @GetMapping("/email/{email}")
     public ResponseEntity<UserDto> getUserByEmail(@PathVariable("email") String email) {
         GetUserByEmailQuery query = new GetUserByEmailQuery(email);
+        UserDto user = queryBus.dispatch(query);
+        return ResponseEntity.ok(user);
+    }
+    
+    @PostMapping("/verify-password")
+    public ResponseEntity<UserDto> verifyPassword(@Valid @RequestBody VerifyPasswordQuery query) {
         UserDto user = queryBus.dispatch(query);
         return ResponseEntity.ok(user);
     }

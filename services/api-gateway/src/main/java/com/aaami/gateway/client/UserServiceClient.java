@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 public class UserServiceClient {
@@ -76,6 +78,21 @@ public class UserServiceClient {
     public UserDto getUserByEmail(String email) {
         String url = serviceProperties.getUserServiceUrl() + "/api/users/email/" + email;
         ResponseEntity<UserDto> response = restTemplate.getForEntity(url, UserDto.class);
+        return response.getBody();
+    }
+    
+    /**
+     * Verifies user password and returns user if valid.
+     * 
+     * @param email User email
+     * @param password User password
+     * @return UserDto if password is correct
+     * @throws org.springframework.web.client.HttpClientErrorException if password is invalid
+     */
+    public UserDto verifyPassword(String email, String password) {
+        String url = serviceProperties.getUserServiceUrl() + "/api/users/verify-password";
+        Map<String, String> request = Map.of("email", email, "password", password);
+        ResponseEntity<UserDto> response = restTemplate.postForEntity(url, request, UserDto.class);
         return response.getBody();
     }
     

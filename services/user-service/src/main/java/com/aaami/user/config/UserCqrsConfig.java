@@ -9,6 +9,7 @@ import com.aaami.user.handler.*;
 import com.aaami.user.query.GetAllUsersQuery;
 import com.aaami.user.query.GetUserByEmailQuery;
 import com.aaami.user.query.GetUserQuery;
+import com.aaami.user.query.VerifyPasswordQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,6 +27,7 @@ public class UserCqrsConfig {
     private final GetUserQueryHandler getUserQueryHandler;
     private final GetUserByEmailQueryHandler getUserByEmailQueryHandler;
     private final GetAllUsersQueryHandler getAllUsersQueryHandler;
+    private final VerifyPasswordQueryHandler verifyPasswordQueryHandler;
     
     @PostConstruct
     public void registerHandlers() {
@@ -38,6 +40,7 @@ public class UserCqrsConfig {
         queryBus.registerHandler(GetUserQuery.class, getUserQueryHandler);
         queryBus.registerHandler(GetUserByEmailQuery.class, getUserByEmailQueryHandler);
         queryBus.registerHandler(GetAllUsersQuery.class, getAllUsersQueryHandler);
+        queryBus.registerHandler(VerifyPasswordQuery.class, verifyPasswordQueryHandler);
     }
 }
 

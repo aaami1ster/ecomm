@@ -12,7 +12,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.Map;
@@ -30,9 +29,6 @@ class AuthControllerTest {
 
     @Mock
     private JwtTokenProvider tokenProvider;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private AuthController controller;
@@ -56,10 +52,10 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_ShouldReturnToken_WhenUserExists() {
+    void login_ShouldReturnToken_WhenPasswordIsValid() {
         // Given
         String expectedToken = "test-jwt-token";
-        when(userServiceClient.getUserByEmail(anyString())).thenReturn(userDto);
+        when(userServiceClient.verifyPassword(anyString(), anyString())).thenReturn(userDto);
         when(tokenProvider.generateToken(any(), anyString(), any())).thenReturn(expectedToken);
 
         // When
@@ -70,14 +66,14 @@ class AuthControllerTest {
         assertNotNull(response.getBody());
         assertEquals(expectedToken, response.getBody().get("token"));
         assertEquals("Bearer", response.getBody().get("type"));
-        verify(userServiceClient).getUserByEmail(loginRequest.getEmail());
+        verify(userServiceClient).verifyPassword(loginRequest.getEmail(), loginRequest.getPassword());
         verify(tokenProvider).generateToken(userDto.getId(), userDto.getEmail(), userDto.getRole());
     }
 
     @Test
     void login_ShouldReturnUnauthorized_WhenUserNotFound() {
         // Given - Return null to simulate user not found
-        when(userServiceClient.getUserByEmail(anyString())).thenReturn(null);
+        when(userServiceClient.verifyPassword(anyString(), anyString())).thenReturn(null);
 
         // When
         ResponseEntity<Map<String, Object>> response = controller.login(loginRequest);
@@ -90,9 +86,24 @@ class AuthControllerTest {
 
     @Test
     void login_ShouldReturnUnauthorized_WhenHttpClientErrorExceptionNotFound() {
-        // Given - Throw HttpClientErrorException with 404 status
-        when(userServiceClient.getUserByEmail(anyString()))
+        // Given - Throw HttpClientErrorException with 404 status (user not found)
+        when(userServiceClient.verifyPassword(anyString(), anyString()))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND, "Not found"));
+
+        // When
+        ResponseEntity<Map<String, Object>> response = controller.login(loginRequest);
+
+        // Then
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().containsKey("error"));
+    }
+
+    @Test
+    void login_ShouldReturnUnauthorized_WhenInvalidPassword() {
+        // Given - Throw BadRequest for invalid password
+        when(userServiceClient.verifyPassword(anyString(), anyString()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Invalid password"));
 
         // When
         ResponseEntity<Map<String, Object>> response = controller.login(loginRequest);
@@ -106,7 +117,7 @@ class AuthControllerTest {
     @Test
     void login_ShouldReturnUnauthorized_WhenExceptionOccurs() {
         // Given
-        when(userServiceClient.getUserByEmail(anyString())).thenThrow(new RuntimeException("Service error"));
+        when(userServiceClient.verifyPassword(anyString(), anyString())).thenThrow(new RuntimeException("Service error"));
 
         // When
         ResponseEntity<Map<String, Object>> response = controller.login(loginRequest);

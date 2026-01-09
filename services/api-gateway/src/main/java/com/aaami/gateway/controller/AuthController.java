@@ -17,7 +17,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +33,6 @@ public class AuthController {
     
     private final UserServiceClient userServiceClient;
     private final JwtTokenProvider tokenProvider;
-    private final PasswordEncoder passwordEncoder;
     
     @Operation(
             summary = "User login",
@@ -76,21 +74,15 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequest request) {
         try {
-            // Get user by email
-            UserDto user = userServiceClient.getUserByEmail(request.getEmail());
+            // Verify password with user service (returns user if valid, throws exception if invalid)
+            UserDto user = userServiceClient.verifyPassword(request.getEmail(), request.getPassword());
             
             if (user == null) {
-                log.warn("Login attempt with non-existent email: {}", request.getEmail());
+                log.warn("Login attempt failed: User not found for email: {}", request.getEmail());
                 return ResponseEntity.status(401).body(createErrorResponse("Invalid email or password"));
             }
             
-            // Note: In a production system, you should add a login/authenticate endpoint to user service
-            // that verifies the password server-side. For now, we'll use a simple approach.
-            // The user service uses a simple password encoder: "encoded_" + password
-            // In production, use BCryptPasswordEncoder and verify on the user service side.
-            
-            // For now, we'll generate a token if user exists
-            // TODO: Add proper password verification endpoint to user service
+            // Generate JWT token for authenticated user
             String token = tokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
             
             Map<String, Object> response = new HashMap<>();
@@ -105,10 +97,13 @@ public class AuthController {
             log.info("User {} logged in successfully", user.getEmail());
             return ResponseEntity.ok(response);
         } catch (HttpClientErrorException.NotFound e) {
-            log.warn("Login attempt with non-existent email");
+            log.warn("Login attempt with non-existent email: {}", request.getEmail());
+            return ResponseEntity.status(401).body(createErrorResponse("Invalid email or password"));
+        } catch (HttpClientErrorException.BadRequest e) {
+            log.warn("Login attempt with invalid password for email: {}", request.getEmail());
             return ResponseEntity.status(401).body(createErrorResponse("Invalid email or password"));
         } catch (Exception e) {
-            log.error("Error during login", e);
+            log.error("Error during login for email: {}", request.getEmail(), e);
             return ResponseEntity.status(401).body(createErrorResponse("Invalid email or password"));
         }
     }

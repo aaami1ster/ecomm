@@ -132,8 +132,9 @@ class UpdateUserCommandHandlerTest {
     void handle_ShouldUpdatePassword_WhenPasswordIsProvided() {
         // Given
         command.setPassword("newPassword");
+        String bcryptHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"; // BCrypt hash for newPassword
         when(userRepository.findByIdAndDeletedAtIsNull(anyLong())).thenReturn(Optional.of(existingUser));
-        when(passwordEncoder.encode(anyString())).thenReturn("encoded_newPassword");
+        when(passwordEncoder.encode(anyString())).thenReturn(bcryptHash);
         when(userRepository.save(any(User.class))).thenReturn(existingUser);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
 
@@ -143,7 +144,7 @@ class UpdateUserCommandHandlerTest {
         // Then
         verify(passwordEncoder).encode("newPassword");
         verify(userRepository).save(existingUser);
-        assertEquals("encoded_newPassword", existingUser.getPassword());
+        assertEquals(bcryptHash, existingUser.getPassword());
     }
 
     @Test
