@@ -1,0 +1,147 @@
+package com.aaami.order.handler;
+
+import com.aaami.shared.command.CreateOrderCommand;
+import com.aaami.shared.command.OrderItemCommand;
+import com.aaami.order.client.ProductServiceClient;
+import com.aaami.order.domain.Order;
+import com.aaami.order.mapper.OrderMapper;
+import com.aaami.order.repository.OrderRepository;
+import com.aaami.order.service.DiscountService;
+import com.aaami.shared.dto.OrderDto;
+import com.aaami.shared.dto.ProductDto;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class CreateOrderCommandHandlerTest {
+
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private OrderMapper orderMapper;
+
+    @Mock
+    private DiscountService discountService;
+
+    @Mock
+    private ProductServiceClient productServiceClient;
+
+    @InjectMocks
+    private CreateOrderCommandHandler handler;
+
+    private CreateOrderCommand command;
+    private ProductDto productDto;
+    private Order order;
+    private OrderDto orderDto;
+
+    @BeforeEach
+    void setUp() {
+        command = new CreateOrderCommand();
+        command.setUserId(1L);
+        
+        OrderItemCommand itemCommand = new OrderItemCommand();
+        itemCommand.setProductId(1L);
+        itemCommand.setQuantity(2);
+        command.setItems(List.of(itemCommand));
+
+        productDto = ProductDto.builder()
+                .id(1L)
+                .name("Test Product")
+                .price(new BigDecimal("50.00"))
+                .quantity(10)
+                .build();
+
+        order = Order.builder()
+                .id(1L)
+                .userId(1L)
+                .build();
+
+        orderDto = OrderDto.builder()
+                .id(1L)
+                .userId(1L)
+                .build();
+    }
+
+    @Test
+    void handle_ShouldCreateOrder_WhenProductExistsAndStockIsSufficient() {
+        // Given
+        when(productServiceClient.getProduct(anyLong())).thenReturn(productDto);
+        when(discountService.calculateDiscount(anyString(), any(BigDecimal.class))).thenReturn(BigDecimal.ZERO);
+        when(discountService.applyDiscount(any(BigDecimal.class), any(BigDecimal.class))).thenReturn(BigDecimal.ZERO);
+        when(productServiceClient.decreaseProductQuantity(anyLong(), any())).thenReturn(productDto);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(orderMapper.toDto(any(Order.class))).thenReturn(orderDto);
+
+        // When
+        OrderDto result = handler.handle(command);
+
+        // Then
+        assertNotNull(result);
+        verify(productServiceClient).getProduct(1L);
+        verify(productServiceClient).decreaseProductQuantity(1L, 2);
+        verify(orderRepository).save(any(Order.class));
+    }
+
+    @Test
+    void handle_ShouldThrowException_WhenProductNotFound() {
+        // Given
+        when(productServiceClient.getProduct(anyLong()))
+                .thenThrow(new org.springframework.web.client.HttpClientErrorException.NotFound("Not found", null, null, null));
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () -> handler.handle(command));
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void handle_ShouldThrowException_WhenInsufficientStock() {
+        // Given
+        productDto.setQuantity(1); // Less than requested
+        when(productServiceClient.getProduct(anyLong())).thenReturn(productDto);
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> handler.handle(command));
+        assertTrue(exception.getMessage().contains("Insufficient stock"));
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void handle_ShouldCalculateOrderTotalCorrectly() {
+        // Given
+        when(productServiceClient.getProduct(anyLong())).thenReturn(productDto);
+        when(discountService.calculateDiscount(anyString(), any(BigDecimal.class))).thenReturn(BigDecimal.ZERO);
+        when(discountService.applyDiscount(any(BigDecimal.class), any(BigDecimal.class))).thenReturn(BigDecimal.ZERO);
+        when(productServiceClient.decreaseProductQuantity(anyLong(), any())).thenReturn(productDto);
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            Order savedOrder = invocation.getArgument(0);
+            savedOrder.setId(1L);
+            return savedOrder;
+        });
+        when(orderMapper.toDto(any(Order.class))).thenReturn(orderDto);
+
+        // When
+        handler.handle(command);
+
+        // Then
+        verify(orderRepository).save(argThat(o -> {
+            BigDecimal expectedTotal = new BigDecimal("50.00").multiply(new BigDecimal("2"));
+            return o.getOrderTotal().compareTo(expectedTotal) == 0;
+        }));
+    }
+}
+
