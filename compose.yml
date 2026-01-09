@@ -219,7 +219,7 @@ services:
     restart: unless-stopped
 
   broker:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.6.0
     container_name: broker
     restart: unless-stopped
     ports:
