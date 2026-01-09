@@ -46,7 +46,24 @@ spring:
           max-idle: 8
           min-idle: 0
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      enable-idempotence: true
+
 # Product cache configuration
 product:
   cache:
     ttl-minutes: ${PRODUCT_CACHE_TTL_MINUTES:30} # Cache TTL in minutes
+
+# Kafka topic configuration
+kafka:
+  topics:
+    product-created: ${KAFKA_TOPIC_PRODUCT_CREATED:product-created}
+    product-updated: ${KAFKA_TOPIC_PRODUCT_UPDATED:product-updated}
+    product-deleted: ${KAFKA_TOPIC_PRODUCT_DELETED:product-deleted}
+    inventory-decreased: ${KAFKA_TOPIC_INVENTORY_DECREASED:inventory-decreased}

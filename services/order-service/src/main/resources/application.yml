@@ -44,6 +44,21 @@ services:
   product-service-url: ${SERVICES_PRODUCT_SERVICE_URL:http://localhost:8081}
   user-service-url: ${SERVICES_USER_SERVICE_URL:http://localhost:8083}
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      enable-idempotence: true
+
 idempotency:
   key:
     expiration-hours: 24
+
+# Kafka topic configuration
+kafka:
+  topics:
+    order-created: ${KAFKA_TOPIC_ORDER_CREATED:order-created}
+    order-status-changed: ${KAFKA_TOPIC_ORDER_STATUS_CHANGED:order-status-changed}

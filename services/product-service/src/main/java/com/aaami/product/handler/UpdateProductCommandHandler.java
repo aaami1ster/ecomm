@@ -7,6 +7,7 @@ import com.aaami.shared.dto.ProductDto;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
 import com.aaami.product.service.ProductCacheService;
+import com.aaami.product.service.ProductEventProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ public class UpdateProductCommandHandler implements CommandHandler<UpdateProduct
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final ProductCacheService productCacheService;
+    private final ProductEventProducer eventProducer;
     
     @Override
     @Transactional
@@ -44,6 +46,9 @@ public class UpdateProductCommandHandler implements CommandHandler<UpdateProduct
         // Invalidate cache and update with new data
         productCacheService.invalidateProduct(command.getId());
         productCacheService.cacheProduct(productDto);
+        
+        // Publish event after successful update
+        eventProducer.publishProductUpdated(productDto);
         
         return productDto;
     }

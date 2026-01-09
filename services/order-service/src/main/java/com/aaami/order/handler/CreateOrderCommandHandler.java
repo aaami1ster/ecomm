@@ -13,6 +13,7 @@ import com.aaami.shared.dto.UserDto;
 import com.aaami.order.mapper.OrderMapper;
 import com.aaami.order.repository.OrderRepository;
 import com.aaami.order.service.IdempotencyService;
+import com.aaami.order.service.OrderEventProducer;
 import com.aaami.discount.DiscountService;
 import com.aaami.shared.dto.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
     private final ProductServiceClient productServiceClient;
     private final UserServiceClient userServiceClient;
     private final IdempotencyService idempotencyService;
+    private final OrderEventProducer eventProducer;
     
     private UserRole getUserRole(Long userId) {
         try {
@@ -171,6 +173,9 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
         if (command.getIdempotencyKey() != null && !command.getIdempotencyKey().isEmpty()) {
             idempotencyService.cacheOrder(command.getIdempotencyKey(), orderDto);
         }
+        
+        // Publish event after successful order creation
+        eventProducer.publishOrderCreated(orderDto);
         
         return orderDto;
     }

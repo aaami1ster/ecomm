@@ -35,6 +35,9 @@ springdoc:
     tags-sorter: alpha
     doc-expansion: none
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
 # Rate limiting configuration
 rate-limit:
   login:

@@ -7,6 +7,7 @@ import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.OrderStatus;
 import com.aaami.order.mapper.OrderMapper;
 import com.aaami.order.repository.OrderRepository;
+import com.aaami.order.service.OrderEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ public class UpdateOrderCommandHandler implements CommandHandler<UpdateOrderComm
     
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
+    private final OrderEventProducer eventProducer;
     
     @Override
     @Transactional
@@ -26,14 +28,23 @@ public class UpdateOrderCommandHandler implements CommandHandler<UpdateOrderComm
         Order order = orderRepository.findByIdAndDeletedAtIsNull(command.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + command.getId()));
         
+        OrderStatus previousStatus = order.getStatus();
+        
         if (command.getStatus() != null) {
-            validateStatusTransition(order.getStatus(), command.getStatus());
+            validateStatusTransition(previousStatus, command.getStatus());
             order.setStatus(command.getStatus());
             log.info("Order {} status updated to {}", order.getId(), command.getStatus());
         }
         
         Order updatedOrder = orderRepository.save(order);
-        return orderMapper.toDto(updatedOrder);
+        OrderDto orderDto = orderMapper.toDto(updatedOrder);
+        
+        // Publish event if status changed
+        if (command.getStatus() != null && !previousStatus.equals(command.getStatus())) {
+            eventProducer.publishOrderStatusChanged(orderDto, previousStatus, command.getStatus());
+        }
+        
+        return orderDto;
     }
     
     private void validateStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {

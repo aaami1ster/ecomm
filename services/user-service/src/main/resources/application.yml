@@ -34,6 +34,22 @@ spring:
     out-of-order: false
     table: flyway_schema_history
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      enable-idempotence: true
+
+# Kafka topic configuration
+kafka:
+  topics:
+    user-created: ${KAFKA_TOPIC_USER_CREATED:user-created}
+    user-updated: ${KAFKA_TOPIC_USER_UPDATED:user-updated}
+    user-deleted: ${KAFKA_TOPIC_USER_DELETED:user-deleted}
+
 logging:
   level:
     root: INFO

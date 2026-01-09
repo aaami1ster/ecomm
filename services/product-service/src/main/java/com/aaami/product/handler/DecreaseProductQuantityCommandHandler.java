@@ -7,6 +7,7 @@ import com.aaami.shared.dto.ProductDto;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
 import com.aaami.product.service.ProductCacheService;
+import com.aaami.product.service.ProductEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ public class DecreaseProductQuantityCommandHandler implements CommandHandler<Dec
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final ProductCacheService productCacheService;
+    private final ProductEventProducer eventProducer;
     
     @Override
     @Transactional
@@ -48,6 +50,9 @@ public class DecreaseProductQuantityCommandHandler implements CommandHandler<Dec
         // Invalidate cache and update with new data
         productCacheService.invalidateProduct(command.getProductId());
         productCacheService.cacheProduct(productDto);
+        
+        // Publish event after successful inventory decrease
+        eventProducer.publishInventoryDecreased(productDto, quantityToDecrease, newQuantity);
         
         return productDto;
     }

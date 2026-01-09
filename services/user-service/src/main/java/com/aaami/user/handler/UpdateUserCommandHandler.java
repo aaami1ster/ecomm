@@ -9,6 +9,7 @@ import com.aaami.user.exception.DuplicateEmailException;
 import com.aaami.user.exception.UserNotFoundException;
 import com.aaami.user.repository.UserRepository;
 import com.aaami.user.service.PasswordEncoder;
+import com.aaami.user.service.UserEventProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ public class UpdateUserCommandHandler implements CommandHandler<UpdateUserComman
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserEventProducer eventProducer;
     
     @Override
     @Transactional
@@ -51,7 +53,12 @@ public class UpdateUserCommandHandler implements CommandHandler<UpdateUserComman
         }
         
         User updatedUser = userRepository.save(user);
-        return userMapper.toDto(updatedUser);
+        UserDto userDto = userMapper.toDto(updatedUser);
+        
+        // Publish event after successful update
+        eventProducer.publishUserUpdated(userDto);
+        
+        return userDto;
     }
 }
 

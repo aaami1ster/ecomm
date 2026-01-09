@@ -8,6 +8,7 @@ import com.aaami.user.mapper.UserMapper;
 import com.aaami.user.exception.DuplicateEmailException;
 import com.aaami.user.repository.UserRepository;
 import com.aaami.user.service.PasswordEncoder;
+import com.aaami.user.service.UserEventProducer;
 import lombok.RequiredArgsConstructor;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ public class CreateUserCommandHandler implements CommandHandler<CreateUserComman
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserEventProducer eventProducer;
     
     @Override
     @Transactional
@@ -43,7 +45,12 @@ public class CreateUserCommandHandler implements CommandHandler<CreateUserComman
                 .build();
         
         User savedUser = userRepository.save(user);
-        return userMapper.toDto(savedUser);
+        UserDto userDto = userMapper.toDto(savedUser);
+        
+        // Publish event after successful save
+        eventProducer.publishUserCreated(userDto);
+        
+        return userDto;
     }
 }
 
