@@ -53,9 +53,11 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
                 
-                // Order endpoints - USER and PREMIUM_USER can view and create orders
-                .requestMatchers("/api/orders").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
-                .requestMatchers("/api/orders/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
+                // Order endpoints - USER and PREMIUM_USER can create orders, ADMIN can only view
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders").hasAnyRole("USER", "PREMIUM_USER")
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/orders", "/api/orders/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
+                // All other order operations (PUT, DELETE, etc.) - only USER and PREMIUM_USER
+                .requestMatchers("/api/orders/**").hasAnyRole("USER", "PREMIUM_USER")
                 
                 // User endpoints - authenticated users can view their own data
                 .requestMatchers("/api/users/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")

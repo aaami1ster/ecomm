@@ -24,14 +24,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
-@Tag(name = "Orders", description = "Order management endpoints. Available to all authenticated users (USER, PREMIUM_USER, ADMIN).")
+@Tag(name = "Orders", description = "Order management endpoints. USER and PREMIUM_USER can create and manage orders. ADMIN can view orders but cannot create them.")
 public class OrderGatewayController {
     
     private final OrderServiceClient orderServiceClient;
     
     @Operation(
             summary = "Create a new order",
-            description = "Creates a new order with the specified items. Product inventory is automatically decreased upon successful order creation. Orders are created with CONFIRMED status. Supports idempotency key to prevent duplicate orders. Available to all authenticated users.",
+            description = "Creates a new order with the specified items. Product inventory is automatically decreased upon successful order creation. Orders are created with CONFIRMED status. Supports idempotency key to prevent duplicate orders. Available to USER and PREMIUM_USER roles only. ADMIN cannot create orders.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -64,7 +64,7 @@ public class OrderGatewayController {
     
     @Operation(
             summary = "Get all orders",
-            description = "Retrieves a paginated list of orders with optional filtering by userId and status. Available to all authenticated users.",
+            description = "Retrieves a paginated list of orders with optional filtering by userId and status. Available to USER, PREMIUM_USER, and ADMIN roles.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -99,7 +99,7 @@ public class OrderGatewayController {
     
     @Operation(
             summary = "Get order by ID",
-            description = "Retrieves a specific order by its ID. Available to all authenticated users.",
+            description = "Retrieves a specific order by its ID. Available to USER, PREMIUM_USER, and ADMIN roles.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -129,7 +129,7 @@ public class OrderGatewayController {
     
     @Operation(
             summary = "Get orders by user ID",
-            description = "Retrieves all orders for a specific user. Available to all authenticated users.",
+            description = "Retrieves all orders for a specific user. Available to USER, PREMIUM_USER, and ADMIN roles.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
