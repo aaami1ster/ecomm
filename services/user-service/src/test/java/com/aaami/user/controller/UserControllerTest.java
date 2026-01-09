@@ -154,7 +154,7 @@ class UserControllerTest {
     void deleteUser_ShouldReturnNoContent_WhenDeleteSucceeds() {
         // Given
         Long userId = 1L;
-        doNothing().when(commandBus).dispatch(any(DeleteUserCommand.class));
+        when(commandBus.dispatch(any(DeleteUserCommand.class))).thenReturn(null);
 
         // When
         ResponseEntity<Void> response = controller.deleteUser(userId);
