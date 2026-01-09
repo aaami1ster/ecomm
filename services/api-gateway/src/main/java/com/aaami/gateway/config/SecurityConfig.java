@@ -40,7 +40,6 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
-                // .requestMatchers("/api/users").permitAll() // Allow user registration
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users", "/api/users/{id}").hasRole("ADMIN")
 

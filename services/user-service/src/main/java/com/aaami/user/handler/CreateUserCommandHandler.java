@@ -10,8 +10,6 @@ import com.aaami.user.repository.UserRepository;
 import com.aaami.user.service.PasswordEncoder;
 import com.aaami.user.service.UserEventProducer;
 import lombok.RequiredArgsConstructor;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class CreateUserCommandHandler implements CommandHandler<CreateUserCommand, UserDto> {
-//    private static final Logger logger = LoggerFactory.getLogger(CreateUserCommandHandler.class);
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -30,7 +27,6 @@ public class CreateUserCommandHandler implements CommandHandler<CreateUserComman
     @Override
     @Transactional
     public UserDto handle(CreateUserCommand command) {
-//        logger.info("Creating user: {}", command.getFirstName());
         log.debug("Received create request for {}", command.getFirstName());
         if (userRepository.existsByEmailAndDeletedAtIsNull(command.getEmail())) {
             throw new DuplicateEmailException("User with email " + command.getEmail() + " already exists");
