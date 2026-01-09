@@ -8,6 +8,7 @@ import com.aaami.order.domain.Order;
 import com.aaami.order.mapper.OrderMapper;
 import com.aaami.order.repository.OrderRepository;
 import com.aaami.order.service.IdempotencyService;
+import com.aaami.order.service.OrderEventProducer;
 import com.aaami.discount.DiscountService;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.OrderStatus;
@@ -52,6 +53,9 @@ class CreateOrderCommandHandlerTest {
 
     @Mock
     private IdempotencyService idempotencyService;
+
+    @Mock
+    private OrderEventProducer eventProducer;
 
     @InjectMocks
     private CreateOrderCommandHandler handler;
@@ -105,6 +109,7 @@ class CreateOrderCommandHandlerTest {
         when(productServiceClient.decreaseProductQuantity(anyLong(), any())).thenReturn(productDto);
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(orderMapper.toDto(any(Order.class))).thenReturn(orderDto);
+        doNothing().when(eventProducer).publishOrderCreated(any(OrderDto.class));
 
         // When
         OrderDto result = handler.handle(command);
@@ -163,6 +168,7 @@ class CreateOrderCommandHandlerTest {
         when(productServiceClient.decreaseProductQuantity(anyLong(), any())).thenReturn(productDto);
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(orderMapper.toDto(any(Order.class))).thenReturn(orderDto);
+        doNothing().when(eventProducer).publishOrderCreated(any(OrderDto.class));
 
         // When
         handler.handle(command);
@@ -233,6 +239,7 @@ class CreateOrderCommandHandlerTest {
             return savedOrder;
         });
         when(orderMapper.toDto(any(Order.class))).thenReturn(orderDto);
+        doNothing().when(eventProducer).publishOrderCreated(any(OrderDto.class));
 
         // When
         handler.handle(command);

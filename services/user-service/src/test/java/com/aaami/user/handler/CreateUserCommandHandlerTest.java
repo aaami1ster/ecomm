@@ -8,6 +8,7 @@ import com.aaami.user.exception.DuplicateEmailException;
 import com.aaami.user.mapper.UserMapper;
 import com.aaami.user.repository.UserRepository;
 import com.aaami.user.service.PasswordEncoder;
+import com.aaami.user.service.UserEventProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,9 @@ class CreateUserCommandHandlerTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private UserEventProducer eventProducer;
 
     @InjectMocks
     private CreateUserCommandHandler handler;
@@ -73,6 +77,7 @@ class CreateUserCommandHandlerTest {
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"); // BCrypt hash
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
+        doNothing().when(eventProducer).publishUserCreated(any(UserDto.class));
 
         // When
         UserDto result = handler.handle(command);
@@ -106,6 +111,7 @@ class CreateUserCommandHandlerTest {
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"); // BCrypt hash
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
+        doNothing().when(eventProducer).publishUserCreated(any(UserDto.class));
 
         // When
         handler.handle(command);
@@ -122,6 +128,7 @@ class CreateUserCommandHandlerTest {
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"); // BCrypt hash
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
+        doNothing().when(eventProducer).publishUserCreated(any(UserDto.class));
 
         // When
         handler.handle(command);

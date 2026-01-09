@@ -9,6 +9,7 @@ import com.aaami.user.exception.UserNotFoundException;
 import com.aaami.user.mapper.UserMapper;
 import com.aaami.user.repository.UserRepository;
 import com.aaami.user.service.PasswordEncoder;
+import com.aaami.user.service.UserEventProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,9 @@ class UpdateUserCommandHandlerTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private UserEventProducer eventProducer;
 
     @InjectMocks
     private UpdateUserCommandHandler handler;
@@ -74,6 +78,7 @@ class UpdateUserCommandHandlerTest {
         when(userRepository.findByIdAndDeletedAtIsNull(anyLong())).thenReturn(Optional.of(existingUser));
         when(userRepository.save(any(User.class))).thenReturn(existingUser);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
+        doNothing().when(eventProducer).publishUserUpdated(any(UserDto.class));
 
         // When
         UserDto result = handler.handle(command);
@@ -105,6 +110,7 @@ class UpdateUserCommandHandlerTest {
         when(userRepository.existsByEmailAndDeletedAtIsNull(anyString())).thenReturn(false);
         when(userRepository.save(any(User.class))).thenReturn(existingUser);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
+        doNothing().when(eventProducer).publishUserUpdated(any(UserDto.class));
 
         // When
         handler.handle(command);
@@ -137,6 +143,7 @@ class UpdateUserCommandHandlerTest {
         when(passwordEncoder.encode(anyString())).thenReturn(bcryptHash);
         when(userRepository.save(any(User.class))).thenReturn(existingUser);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
+        doNothing().when(eventProducer).publishUserUpdated(any(UserDto.class));
 
         // When
         handler.handle(command);
@@ -154,6 +161,7 @@ class UpdateUserCommandHandlerTest {
         when(userRepository.findByIdAndDeletedAtIsNull(anyLong())).thenReturn(Optional.of(existingUser));
         when(userRepository.save(any(User.class))).thenReturn(existingUser);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
+        doNothing().when(eventProducer).publishUserUpdated(any(UserDto.class));
 
         // When
         handler.handle(command);
@@ -170,6 +178,7 @@ class UpdateUserCommandHandlerTest {
         when(userRepository.findByIdAndDeletedAtIsNull(anyLong())).thenReturn(Optional.of(existingUser));
         when(userRepository.save(any(User.class))).thenReturn(existingUser);
         when(userMapper.toDto(any(User.class))).thenReturn(userDto);
+        doNothing().when(eventProducer).publishUserUpdated(any(UserDto.class));
 
         // When
         handler.handle(command);

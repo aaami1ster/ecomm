@@ -1,9 +1,12 @@
 package com.aaami.user.handler;
 
 import com.aaami.shared.command.DeleteUserCommand;
+import com.aaami.shared.dto.UserDto;
 import com.aaami.user.domain.User;
 import com.aaami.user.exception.UserNotFoundException;
+import com.aaami.user.mapper.UserMapper;
 import com.aaami.user.repository.UserRepository;
+import com.aaami.user.service.UserEventProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,11 +30,18 @@ class DeleteUserCommandHandlerTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private UserMapper userMapper;
+
+    @Mock
+    private UserEventProducer eventProducer;
+
     @InjectMocks
     private DeleteUserCommandHandler handler;
 
     private DeleteUserCommand command;
     private User user;
+    private UserDto userDto;
 
     @BeforeEach
     void setUp() {
@@ -44,6 +54,13 @@ class DeleteUserCommandHandlerTest {
                 .firstName("John")
                 .lastName("Doe")
                 .build();
+
+        userDto = UserDto.builder()
+                .id(1L)
+                .email("test@example.com")
+                .firstName("John")
+                .lastName("Doe")
+                .build();
     }
 
     @Test
@@ -51,7 +68,9 @@ class DeleteUserCommandHandlerTest {
     void handle_ShouldSoftDeleteUser_WhenUserExists() {
         // Given
         when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(user));
+        when(userMapper.toDto(any(User.class))).thenReturn(userDto);
         when(userRepository.save(any(User.class))).thenReturn(user);
+        doNothing().when(eventProducer).publishUserDeleted(any(UserDto.class));
 
         // When
         handler.handle(command);
@@ -81,10 +100,12 @@ class DeleteUserCommandHandlerTest {
         // Given
         LocalDateTime beforeDelete = LocalDateTime.now();
         when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(user));
+        when(userMapper.toDto(any(User.class))).thenReturn(userDto);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User savedUser = invocation.getArgument(0);
             return savedUser;
         });
+        doNothing().when(eventProducer).publishUserDeleted(any(UserDto.class));
 
         // When
         handler.handle(command);
