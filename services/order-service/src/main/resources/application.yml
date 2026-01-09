@@ -36,3 +36,4 @@ spring:
 
 services:
   product-service-url: ${SERVICES_PRODUCT_SERVICE_URL:http://localhost:8081}
+  user-service-url: ${SERVICES_USER_SERVICE_URL:http://localhost:8083}

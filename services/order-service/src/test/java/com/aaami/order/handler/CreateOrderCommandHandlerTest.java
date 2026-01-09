@@ -3,12 +3,15 @@ package com.aaami.order.handler;
 import com.aaami.shared.command.CreateOrderCommand;
 import com.aaami.shared.command.OrderItemCommand;
 import com.aaami.order.client.ProductServiceClient;
+import com.aaami.order.client.UserServiceClient;
 import com.aaami.order.domain.Order;
 import com.aaami.order.mapper.OrderMapper;
 import com.aaami.order.repository.OrderRepository;
-import com.aaami.order.service.DiscountService;
+import com.aaami.discount.DiscountService;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.ProductDto;
+import com.aaami.shared.dto.UserDto;
+import com.aaami.shared.dto.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +23,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,6 +44,9 @@ class CreateOrderCommandHandlerTest {
 
     @Mock
     private ProductServiceClient productServiceClient;
+
+    @Mock
+    private UserServiceClient userServiceClient;
 
     @InjectMocks
     private CreateOrderCommandHandler handler;
@@ -82,9 +87,15 @@ class CreateOrderCommandHandlerTest {
     @Test
     void handle_ShouldCreateOrder_WhenProductExistsAndStockIsSufficient() {
         // Given
+        UserDto userDto = UserDto.builder()
+                .id(1L)
+                .email("user@example.com")
+                .role(UserRole.USER)
+                .build();
+        
+        when(userServiceClient.getUser(anyLong())).thenReturn(userDto);
         when(productServiceClient.getProduct(anyLong())).thenReturn(productDto);
-        when(discountService.calculateDiscount(anyString(), any(BigDecimal.class))).thenReturn(BigDecimal.ZERO);
-        when(discountService.applyDiscount(any(BigDecimal.class), any(BigDecimal.class))).thenReturn(BigDecimal.ZERO);
+        when(discountService.calculateDiscount(any(BigDecimal.class), any(UserRole.class))).thenReturn(BigDecimal.ZERO);
         when(productServiceClient.decreaseProductQuantity(anyLong(), any())).thenReturn(productDto);
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(orderMapper.toDto(any(Order.class))).thenReturn(orderDto);
@@ -94,6 +105,7 @@ class CreateOrderCommandHandlerTest {
 
         // Then
         assertNotNull(result);
+        verify(userServiceClient).getUser(1L);
         verify(productServiceClient).getProduct(1L);
         verify(productServiceClient).decreaseProductQuantity(1L, 2);
         verify(orderRepository).save(any(Order.class));
@@ -141,9 +153,15 @@ class CreateOrderCommandHandlerTest {
     @Test
     void handle_ShouldCalculateOrderTotalCorrectly() {
         // Given
+        UserDto userDto = UserDto.builder()
+                .id(1L)
+                .email("user@example.com")
+                .role(UserRole.USER)
+                .build();
+        
+        when(userServiceClient.getUser(anyLong())).thenReturn(userDto);
         when(productServiceClient.getProduct(anyLong())).thenReturn(productDto);
-        when(discountService.calculateDiscount(anyString(), any(BigDecimal.class))).thenReturn(BigDecimal.ZERO);
-        when(discountService.applyDiscount(any(BigDecimal.class), any(BigDecimal.class))).thenReturn(BigDecimal.ZERO);
+        when(discountService.calculateDiscount(any(BigDecimal.class), any(UserRole.class))).thenReturn(BigDecimal.ZERO);
         when(productServiceClient.decreaseProductQuantity(anyLong(), any())).thenReturn(productDto);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
             Order savedOrder = invocation.getArgument(0);

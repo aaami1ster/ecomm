@@ -1,4 +1,4 @@
-package com.aaami.order.config;
+package com.aaami.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

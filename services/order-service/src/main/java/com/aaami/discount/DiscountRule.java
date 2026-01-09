@@ -1,4 +1,4 @@
-package com.aaami.order.service;
+package com.aaami.discount;
 
 import com.aaami.order.domain.Order;
 import com.aaami.shared.dto.UserRole;
@@ -9,8 +9,8 @@ public interface DiscountRule {
     /**
      * @return discount amount in money (not percentage), must be >= 0
      */
-    BigDecimal calculateDiscount(Order order, UserRole userRole);
-    boolean isApplicable(Order order, UserRole userRole);
+    BigDecimal calculateDiscount(BigDecimal orderSubtotal, UserRole userRole);
+    boolean isApplicable(BigDecimal orderSubtotal, UserRole userRole);
 
     default String name() {
         return this.getClass().getSimpleName();

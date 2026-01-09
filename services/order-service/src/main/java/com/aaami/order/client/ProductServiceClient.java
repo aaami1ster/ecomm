@@ -2,7 +2,7 @@ package com.aaami.order.client;
 
 import com.aaami.shared.command.DecreaseProductQuantityCommand;
 import com.aaami.shared.dto.ProductDto;
-import com.aaami.order.config.ServiceProperties;
+import com.aaami.config.ServiceProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;

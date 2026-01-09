@@ -1,4 +1,4 @@
-package com.aaami.order.service;
+package com.aaami.discount;
 
 import com.aaami.order.domain.Order;
 import com.aaami.shared.dto.UserRole;
@@ -21,19 +21,15 @@ public class DiscountService {
 //    private static final BigDecimal HIGH_VALUE_ORDER_DISCOUNT = new BigDecimal("0.05"); // 5%
 //    private static final BigDecimal HIGH_VALUE_THRESHOLD = new BigDecimal("500.00");
 
-    public BigDecimal calculateDiscount(Order order, UserRole userRole) {
-        var orderTotal = order.getOrderTotal();
-        BigDecimal totalDiscount = BigDecimal.ZERO;
-        for (var rule : rules) {
-            BigDecimal d = safeMoney(rule.calculateDiscount(order, userRole));
-            if (d.signum() > 0) {
-                totalDiscount = totalDiscount.add(d);
-            }
-        }
+    public BigDecimal calculateDiscount(BigDecimal orderSubtotal, UserRole userRole) {
+        var totalDiscount = rules.stream()
+                .filter(strategy -> strategy.isApplicable(orderSubtotal, userRole))
+                .map(strategy -> strategy.calculateDiscount(orderSubtotal, userRole))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Guardrail: never discount more than order total
-        if (totalDiscount.compareTo(orderTotal) > 0) {
-            totalDiscount = orderTotal;
+        if (totalDiscount.compareTo(orderSubtotal) > 0) {
+            totalDiscount = orderSubtotal;
         }
         // money rounding (2 decimals)
         totalDiscount = totalDiscount.setScale(2, RoundingMode.HALF_UP);

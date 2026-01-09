@@ -1,25 +1,27 @@
-package com.aaami.order.service;
+package com.aaami.discount;
 
-import com.aaami.order.domain.Order;
+import org.springframework.core.annotation.Order;
 import com.aaami.shared.dto.UserRole;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
 @Component
+@Order(20)
 public class PremiumUserDiscountRule implements DiscountRule {
     private static final BigDecimal PREMIUM_USER_DISCOUNT = new BigDecimal("0.10"); // 10%
 
     @Override
-    public BigDecimal calculateDiscount(Order order, UserRole userRole) {
-        if (isApplicable(order, userRole)) {
-            return order.getOrderTotal().multiply(PREMIUM_USER_DISCOUNT);
+    public BigDecimal calculateDiscount(BigDecimal orderSubtotal, UserRole userRole) {
+        if (isApplicable(orderSubtotal, userRole)) {
+            return orderSubtotal.multiply(PREMIUM_USER_DISCOUNT)
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
         }
-        return BigDecimal.ZERO;
+        return BigDecimal.ZERO.setScale(2);
     }
 
     @Override
-    public boolean isApplicable(Order order, UserRole userRole) {
-        return userRole.equals(userRole);
+    public boolean isApplicable(BigDecimal orderSubtotal, UserRole userRole) {
+        return userRole == UserRole.PREMIUM_USER || userRole == UserRole.ADMIN;
     }
 }

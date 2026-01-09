@@ -1,4 +1,4 @@
-package com.aaami.order.config;
+package com.aaami.config;
 
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;

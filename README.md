@@ -202,6 +202,18 @@ The `shared` module contains:
 - **Contract Definition**: Clear API contracts for frontend developers
 - **Maintainability**: Documentation stays in sync with code
 
+### 8. Chain of Responsibility Pattern for Discounts
+
+**Decision**: Discount calculation using Chain of Responsibility / Pipeline pattern
+
+**Rationale**:
+- **Extensibility**: Easy to add new discount rules without modifying existing code
+- **Separation of Concerns**: Each discount rule is independent and testable
+- **Flexibility**: Rules can be reordered, enabled, or disabled via Spring `@Order` annotation
+- **Composability**: Multiple discounts can apply simultaneously (additive)
+- **Maintainability**: Clear, single-responsibility classes for each discount type
+- **Testability**: Each rule can be unit tested independently
+
 ## 📦 Prerequisites
 
 ### Required Software
@@ -466,16 +478,86 @@ Authorization: Bearer {token}
 - View products
 - Create and manage own orders
 - Update own profile
+- 5% discount on orders above $500
 
 #### PREMIUM_USER
 - All USER permissions
-- Discounts on orders (based on order total)
+- 10% discount on all orders
+- Additional 5% discount on orders above $500 (total 15%)
 
 #### ADMIN
 - Full CRUD on products
 - Full CRUD on users
 - View all orders
-- All PREMIUM_USER permissions
+- All PREMIUM_USER permissions (10% discount + 5% for large orders)
+
+### Discount System
+
+The discount system uses the **Chain of Responsibility / Pipeline pattern** to apply multiple discount rules in a flexible and extensible way.
+
+> 📖 **Detailed Documentation**: See [DISCOUNT_SYSTEM.md](services/order-service/DISCOUNT_SYSTEM.md) for comprehensive discount system documentation, code examples, and enhancement suggestions.
+
+#### Architecture
+
+- **DiscountRule Interface**: Defines the contract for discount rules
+  - `isApplicable()`: Determines if the rule applies to the given order
+  - `calculateDiscount()`: Calculates the discount amount
+  - Rules are implemented as Spring `@Component` beans with `@Order` annotation for execution order
+
+- **DiscountService**: Orchestrates discount calculation
+  - Collects all `DiscountRule` beans via dependency injection
+  - Filters applicable rules based on order subtotal and user role
+  - Sums discounts from all applicable rules (additive)
+  - Applies guardrails:
+    - Discount cannot exceed order total
+    - Discounts are rounded to 2 decimal places
+
+#### Current Discount Rules
+
+1. **LargeOrderExtraDiscountRule** (`@Order(10)`)
+   - **Priority**: 10 (executed first)
+   - **Applicable**: Orders above $500.00
+   - **Discount**: 5% of order subtotal
+   - **Applies to**: All user roles (USER, PREMIUM_USER, ADMIN)
+
+2. **PremiumUserDiscountRule** (`@Order(20)`)
+   - **Priority**: 20 (executed second)
+   - **Applicable**: PREMIUM_USER or ADMIN roles
+   - **Discount**: 10% of order subtotal
+   - **Applies to**: PREMIUM_USER, ADMIN
+
+#### Discount Examples
+
+| User Role    | Order Amount | Large Order Rule | Premium Rule    | Total Discount |
+| ------------ | ------------ | ---------------- | --------------- | -------------- |
+| USER         | $100         | No (below $500)  | No              | $0             |
+| USER         | $600         | Yes (5% = $30)   | No              | $30            |
+| PREMIUM_USER | $100         | No               | Yes (10% = $10) | $10            |
+| PREMIUM_USER | $600         | Yes (5% = $30)   | Yes (10% = $60) | $90 (15%)      |
+| ADMIN        | $100         | No               | Yes (10% = $10) | $10            |
+| ADMIN        | $600         | Yes (5% = $30)   | Yes (10% = $60) | $90 (15%)      |
+
+#### Benefits of This Pattern
+
+- **Extensibility**: Easy to add new discount rules without modifying existing code
+- **Testability**: Each rule can be tested independently
+- **Maintainability**: Clear separation of concerns
+- **Flexibility**: Rules can be enabled/disabled or reordered via `@Order` annotation
+- **Composability**: Multiple rules can apply simultaneously (discounts are additive)
+- **Single Responsibility**: Each rule has one clear purpose
+
+#### Adding a New Discount Rule
+
+To add a new discount rule, simply:
+
+1. Create a class implementing `DiscountRule`
+2. Annotate with `@Component` and `@Order(priority)`
+3. Implement `isApplicable()` and `calculateDiscount()` methods
+4. Spring will automatically inject it into `DiscountService`
+
+No changes needed to `DiscountService` or other rules!
+
+See [DISCOUNT_SYSTEM.md](services/order-service/DISCOUNT_SYSTEM.md) for detailed examples and best practices.
 
 ### Example API Calls
 

@@ -1,4 +1,4 @@
-package com.aaami.order.config;
+package com.aaami.config;
 
 import com.aaami.cqrs.CommandBus;
 import com.aaami.cqrs.QueryBus;

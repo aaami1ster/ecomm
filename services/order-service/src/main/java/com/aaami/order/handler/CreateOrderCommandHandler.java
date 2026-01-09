@@ -4,13 +4,16 @@ import com.aaami.cqrs.CommandHandler;
 import com.aaami.shared.command.CreateOrderCommand;
 import com.aaami.shared.command.OrderItemCommand;
 import com.aaami.order.client.ProductServiceClient;
+import com.aaami.order.client.UserServiceClient;
 import com.aaami.order.domain.Order;
 import com.aaami.order.domain.OrderItem;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.ProductDto;
+import com.aaami.shared.dto.UserDto;
 import com.aaami.order.mapper.OrderMapper;
 import com.aaami.order.repository.OrderRepository;
-import com.aaami.order.service.DiscountService;
+import com.aaami.discount.DiscountService;
+import com.aaami.shared.dto.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,13 +32,27 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
     private final OrderMapper orderMapper;
     private final DiscountService discountService;
     private final ProductServiceClient productServiceClient;
+    private final UserServiceClient userServiceClient;
     
-    // TODO: Inject user service client to get user role
-    // For now, we'll use a placeholder - in real implementation, fetch from user service
-    private String getUserRole(Long userId) {
-        // This should call user-service to get user role
-        // For now, returning a default value
-        return "USER";
+    private UserRole getUserRole(Long userId) {
+        try {
+            UserDto user = userServiceClient.getUser(userId);
+            if (user == null) {
+                log.error("User {} not found in user service", userId);
+                throw new IllegalArgumentException("User not found with id: " + userId);
+            }
+            if (user.getRole() == null) {
+                log.error("User {} has no role assigned", userId);
+                throw new IllegalStateException("User " + userId + " has no role assigned");
+            }
+            return user.getRole();
+        } catch (org.springframework.web.client.HttpClientErrorException.NotFound e) {
+            log.error("User {} not found in user service", userId);
+            throw new IllegalArgumentException("User not found with id: " + userId);
+        } catch (org.springframework.web.client.RestClientException e) {
+            log.error("Error fetching user {} from user service: {}", userId, e.getMessage());
+            throw new IllegalStateException("Unable to fetch user details. Please try again later.", e);
+        }
     }
     
     @Override
@@ -94,14 +111,18 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
             orderSubtotal = orderSubtotal.add(itemSubtotal);
         }
         
+        // Get user role from user service
+        UserRole userRole = getUserRole(command.getUserId());
+        
         // Calculate discount
-        String userRole = getUserRole(command.getUserId());
-        BigDecimal discountRate = discountService.calculateDiscount(userRole, orderSubtotal);
-        BigDecimal discountAmount = discountService.applyDiscount(orderSubtotal, discountRate);
+        BigDecimal discountAmount = discountService.calculateDiscount(orderSubtotal, userRole);
         BigDecimal orderTotal = orderSubtotal.subtract(discountAmount);
         
         // Apply discount proportionally to items
-        if (discountAmount.compareTo(BigDecimal.ZERO) > 0) {
+        if (discountAmount.compareTo(BigDecimal.ZERO) > 0 && orderSubtotal.compareTo(BigDecimal.ZERO) > 0) {
+            // Calculate discount rate as a percentage of the order subtotal
+            BigDecimal discountRate = discountAmount.divide(orderSubtotal, 4, java.math.RoundingMode.HALF_UP);
+            
             for (OrderItem item : orderItems) {
                 BigDecimal itemDiscount = item.getTotalPrice()
                         .multiply(discountRate)

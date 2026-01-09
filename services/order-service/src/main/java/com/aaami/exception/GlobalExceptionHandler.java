@@ -1,4 +1,4 @@
-package com.aaami.order.exception;
+package com.aaami.exception;
 
 import com.aaami.shared.exception.BaseGlobalExceptionHandler;
 import com.aaami.shared.exception.ErrorResponse;
