@@ -17,6 +17,9 @@ public class PasswordEncoder {
     
     public boolean matches(String rawPassword, String encodedPassword) {
         // This is a placeholder - in production, use BCryptPasswordEncoder
+        if (encodedPassword == null) {
+            return false;
+        }
         return encodedPassword.equals("encoded_" + rawPassword);
     }
 }
