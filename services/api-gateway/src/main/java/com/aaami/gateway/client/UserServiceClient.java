@@ -6,6 +6,8 @@ import com.aaami.shared.dto.PaginatedResponse;
 import com.aaami.shared.dto.UserDto;
 import com.aaami.shared.dto.UserRole;
 import com.aaami.gateway.config.ServiceProperties;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -24,12 +26,16 @@ public class UserServiceClient {
     private final RestTemplate restTemplate;
     private final ServiceProperties serviceProperties;
     
+    @CircuitBreaker(name = "userService", fallbackMethod = "createUserFallback")
+    @Retry(name = "userService")
     public UserDto createUser(CreateUserCommand command) {
         String url = serviceProperties.getUserServiceUrl() + "/api/users";
         ResponseEntity<UserDto> response = restTemplate.postForEntity(url, command, UserDto.class);
         return response.getBody();
     }
     
+    @CircuitBreaker(name = "userService", fallbackMethod = "getAllUsersFallback")
+    @Retry(name = "userService")
     public PaginatedResponse<UserDto> getAllUsers(String firstName, String lastName, String email, UserRole role,
                                                    Integer page, Integer size, String sortBy, String sortDirection) {
         UriComponentsBuilder builder = UriComponentsBuilder
@@ -69,12 +75,16 @@ public class UserServiceClient {
         return response.getBody();
     }
     
+    @CircuitBreaker(name = "userService", fallbackMethod = "getUserFallback")
+    @Retry(name = "userService")
     public UserDto getUser(Long id) {
         String url = serviceProperties.getUserServiceUrl() + "/api/users/" + id;
         ResponseEntity<UserDto> response = restTemplate.getForEntity(url, UserDto.class);
         return response.getBody();
     }
     
+    @CircuitBreaker(name = "userService", fallbackMethod = "getUserByEmailFallback")
+    @Retry(name = "userService")
     public UserDto getUserByEmail(String email) {
         String url = serviceProperties.getUserServiceUrl() + "/api/users/email/" + email;
         ResponseEntity<UserDto> response = restTemplate.getForEntity(url, UserDto.class);
@@ -89,6 +99,8 @@ public class UserServiceClient {
      * @return UserDto if password is correct
      * @throws org.springframework.web.client.HttpClientErrorException if password is invalid
      */
+    @CircuitBreaker(name = "userService", fallbackMethod = "verifyPasswordFallback")
+    @Retry(name = "userService")
     public UserDto verifyPassword(String email, String password) {
         String url = serviceProperties.getUserServiceUrl() + "/api/users/verify-password";
         Map<String, String> request = Map.of("email", email, "password", password);
@@ -96,6 +108,8 @@ public class UserServiceClient {
         return response.getBody();
     }
     
+    @CircuitBreaker(name = "userService", fallbackMethod = "updateUserFallback")
+    @Retry(name = "userService")
     public UserDto updateUser(Long id, UpdateUserCommand command) {
         String url = serviceProperties.getUserServiceUrl() + "/api/users/" + id;
         ResponseEntity<UserDto> response = restTemplate.exchange(
@@ -107,9 +121,38 @@ public class UserServiceClient {
         return response.getBody();
     }
     
+    @CircuitBreaker(name = "userService")
+    @Retry(name = "userService")
     public void deleteUser(Long id) {
         String url = serviceProperties.getUserServiceUrl() + "/api/users/" + id;
         restTemplate.delete(url);
+    }
+    
+    // Fallback methods
+    private UserDto createUserFallback(CreateUserCommand command, Exception ex) {
+        throw new RuntimeException("User service unavailable. Unable to create user.", ex);
+    }
+    
+    private PaginatedResponse<UserDto> getAllUsersFallback(String firstName, String lastName, String email, 
+                                                            UserRole role, Integer page, Integer size, 
+                                                            String sortBy, String sortDirection, Exception ex) {
+        throw new RuntimeException("User service unavailable. Unable to get all users.", ex);
+    }
+    
+    private UserDto getUserFallback(Long id, Exception ex) {
+        throw new RuntimeException("User service unavailable. Unable to get user: " + id, ex);
+    }
+    
+    private UserDto getUserByEmailFallback(String email, Exception ex) {
+        throw new RuntimeException("User service unavailable. Unable to get user by email: " + email, ex);
+    }
+    
+    private UserDto verifyPasswordFallback(String email, String password, Exception ex) {
+        throw new RuntimeException("User service unavailable. Unable to verify password.", ex);
+    }
+    
+    private UserDto updateUserFallback(Long id, UpdateUserCommand command, Exception ex) {
+        throw new RuntimeException("User service unavailable. Unable to update user: " + id, ex);
     }
 }
 

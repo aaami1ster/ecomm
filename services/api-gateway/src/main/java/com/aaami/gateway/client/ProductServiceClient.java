@@ -6,6 +6,8 @@ import com.aaami.shared.command.UpdateProductCommand;
 import com.aaami.shared.dto.PaginatedResponse;
 import com.aaami.shared.dto.ProductDto;
 import com.aaami.gateway.config.ServiceProperties;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -24,18 +26,24 @@ public class ProductServiceClient {
     private final RestTemplate restTemplate;
     private final ServiceProperties serviceProperties;
     
+    @CircuitBreaker(name = "productService", fallbackMethod = "createProductFallback")
+    @Retry(name = "productService")
     public ProductDto createProduct(CreateProductCommand command) {
         String url = serviceProperties.getProductServiceUrl() + "/api/products";
         ResponseEntity<ProductDto> response = restTemplate.postForEntity(url, command, ProductDto.class);
         return response.getBody();
     }
     
+    @CircuitBreaker(name = "productService", fallbackMethod = "getProductFallback")
+    @Retry(name = "productService")
     public ProductDto getProduct(Long id) {
         String url = serviceProperties.getProductServiceUrl() + "/api/products/" + id;
         ResponseEntity<ProductDto> response = restTemplate.getForEntity(url, ProductDto.class);
         return response.getBody();
     }
     
+    @CircuitBreaker(name = "productService", fallbackMethod = "searchProductsFallback")
+    @Retry(name = "productService")
     public PaginatedResponse<ProductDto> searchProducts(String name, BigDecimal minPrice, BigDecimal maxPrice, Boolean availableOnly,
                                                          Integer page, Integer size, String sortBy, String sortDirection) {
         UriComponentsBuilder builder = UriComponentsBuilder
@@ -76,6 +84,8 @@ public class ProductServiceClient {
         return response.getBody();
     }
     
+    @CircuitBreaker(name = "productService", fallbackMethod = "updateProductFallback")
+    @Retry(name = "productService")
     public ProductDto updateProduct(Long id, UpdateProductCommand command) {
         String url = serviceProperties.getProductServiceUrl() + "/api/products/" + id;
         ResponseEntity<ProductDto> response = restTemplate.exchange(
@@ -87,9 +97,30 @@ public class ProductServiceClient {
         return response.getBody();
     }
     
+    @CircuitBreaker(name = "productService")
+    @Retry(name = "productService")
     public void deleteProduct(Long id) {
         String url = serviceProperties.getProductServiceUrl() + "/api/products/" + id;
         restTemplate.delete(url);
+    }
+    
+    // Fallback methods
+    private ProductDto createProductFallback(CreateProductCommand command, Exception ex) {
+        throw new RuntimeException("Product service unavailable. Unable to create product.", ex);
+    }
+    
+    private ProductDto getProductFallback(Long id, Exception ex) {
+        throw new RuntimeException("Product service unavailable. Unable to get product: " + id, ex);
+    }
+    
+    private PaginatedResponse<ProductDto> searchProductsFallback(String name, BigDecimal minPrice, BigDecimal maxPrice, 
+                                                                  Boolean availableOnly, Integer page, Integer size, 
+                                                                  String sortBy, String sortDirection, Exception ex) {
+        throw new RuntimeException("Product service unavailable. Unable to search products.", ex);
+    }
+    
+    private ProductDto updateProductFallback(Long id, UpdateProductCommand command, Exception ex) {
+        throw new RuntimeException("Product service unavailable. Unable to update product: " + id, ex);
     }
 }
 
