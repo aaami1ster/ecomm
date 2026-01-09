@@ -87,35 +87,7 @@ class DiscountServiceTest {
         assertEquals(expectedDiscount, discount);
     }
 
-    @Test
-    @DisplayName("Should return 10% discount for ADMIN role (same as PREMIUM_USER)")
-    void calculateDiscount_ShouldReturnTenPercent_ForAdminRole() {
-        // Given
-        UserRole role = UserRole.ADMIN;
-        BigDecimal orderSubtotal = new BigDecimal("100.00");
-
-        // When
-        BigDecimal discount = discountService.calculateDiscount(orderSubtotal, role);
-
-        // Then
-        BigDecimal expectedDiscount = new BigDecimal("10.00"); // 10% of 100
-        assertEquals(expectedDiscount, discount);
-    }
-
-    @Test
-    @DisplayName("Should return 15% discount for ADMIN role with order above threshold")
-    void calculateDiscount_ShouldReturnFifteenPercent_ForAdminRoleAboveThreshold() {
-        // Given
-        UserRole role = UserRole.ADMIN;
-        BigDecimal orderSubtotal = new BigDecimal("600.00");
-
-        // When
-        BigDecimal discount = discountService.calculateDiscount(orderSubtotal, role);
-
-        // Then
-        BigDecimal expectedDiscount = new BigDecimal("90.00"); // 10% + 5%
-        assertEquals(expectedDiscount, discount);
-    }
+ 
 
     @Test
     @DisplayName("Should cap discount at order total (guardrail)")

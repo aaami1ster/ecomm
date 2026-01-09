@@ -22,6 +22,6 @@ public class PremiumUserDiscountRule implements DiscountRule {
 
     @Override
     public boolean isApplicable(BigDecimal orderSubtotal, UserRole userRole) {
-        return userRole == UserRole.PREMIUM_USER || userRole == UserRole.ADMIN;
+        return userRole == UserRole.PREMIUM_USER;
     }
 }

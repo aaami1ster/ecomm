@@ -34,20 +34,6 @@ class PremiumUserDiscountRuleTest {
     }
 
     @Test
-    @DisplayName("Should be applicable for ADMIN role")
-    void isApplicable_ShouldReturnTrue_ForAdminRole() {
-        // Given
-        BigDecimal orderSubtotal = new BigDecimal("100.00");
-        UserRole role = UserRole.ADMIN;
-
-        // When
-        boolean applicable = rule.isApplicable(orderSubtotal, role);
-
-        // Then
-        assertTrue(applicable);
-    }
-
-    @Test
     @DisplayName("Should not be applicable for USER role")
     void isApplicable_ShouldReturnFalse_ForUserRole() {
         // Given
@@ -73,21 +59,6 @@ class PremiumUserDiscountRuleTest {
 
         // Then
         BigDecimal expectedDiscount = new BigDecimal("10.00");
-        assertEquals(expectedDiscount, discount);
-    }
-
-    @Test
-    @DisplayName("Should calculate 10% discount for ADMIN")
-    void calculateDiscount_ShouldReturnTenPercent_ForAdmin() {
-        // Given
-        BigDecimal orderSubtotal = new BigDecimal("200.00");
-        UserRole role = UserRole.ADMIN;
-
-        // When
-        BigDecimal discount = rule.calculateDiscount(orderSubtotal, role);
-
-        // Then
-        BigDecimal expectedDiscount = new BigDecimal("20.00");
         assertEquals(expectedDiscount, discount);
     }
 

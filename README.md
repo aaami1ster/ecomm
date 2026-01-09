@@ -544,13 +544,13 @@ The discount system uses the **Chain of Responsibility / Pipeline pattern** to a
    - **Priority**: 10 (executed first)
    - **Applicable**: Orders above $500.00
    - **Discount**: 5% of order subtotal
-   - **Applies to**: All user roles (USER, PREMIUM_USER, ADMIN)
+   - **Applies to**: All user roles (USER, PREMIUM_USER)
 
 2. **PremiumUserDiscountRule** (`@Order(20)`)
    - **Priority**: 20 (executed second)
-   - **Applicable**: PREMIUM_USER or ADMIN roles
+   - **Applicable**: PREMIUM_USER role
    - **Discount**: 10% of order subtotal
-   - **Applies to**: PREMIUM_USER, ADMIN
+   - **Applies to**: PREMIUM_USER
 
 #### Discount Examples
 
@@ -560,8 +560,6 @@ The discount system uses the **Chain of Responsibility / Pipeline pattern** to a
 | USER         | $600         | Yes (5% = $30)   | No              | $30            |
 | PREMIUM_USER | $100         | No               | Yes (10% = $10) | $10            |
 | PREMIUM_USER | $600         | Yes (5% = $30)   | Yes (10% = $60) | $90 (15%)      |
-| ADMIN        | $100         | No               | Yes (10% = $10) | $10            |
-| ADMIN        | $600         | Yes (5% = $30)   | Yes (10% = $60) | $90 (15%)      |
 
 #### Benefits of This Pattern
 

@@ -66,7 +66,7 @@ Rules are implemented as Spring `@Component` beans with `@Order` annotation to c
 
 ##### PremiumUserDiscountRule (`@Order(20)`)
 - **Priority**: 20 (executed second)
-- **Applicable**: PREMIUM_USER or ADMIN roles
+- **Applicable**: PREMIUM_USER role
 - **Discount**: 10% of order subtotal
 - **Applies to**: PREMIUM_USER, ADMIN
 
@@ -101,8 +101,6 @@ Return Total Discount
 | USER         | $600         | Yes (5% = $30)   | No              | $30            |
 | PREMIUM_USER | $100         | No               | Yes (10% = $10) | $10            |
 | PREMIUM_USER | $600         | Yes (5% = $30)   | Yes (10% = $60) | $90 (15%)      |
-| ADMIN        | $100         | No               | Yes (10% = $10) | $10            |
-| ADMIN        | $600         | Yes (5% = $30)   | Yes (10% = $60) | $90 (15%)      |
 
 ## Adding a New Discount Rule
 
