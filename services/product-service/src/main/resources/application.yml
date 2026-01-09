@@ -33,3 +33,20 @@ spring:
     clean-disabled: true
     out-of-order: false
     table: flyway_schema_history
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# Product cache configuration
+product:
+  cache:
+    ttl-minutes: ${PRODUCT_CACHE_TTL_MINUTES:30} # Cache TTL in minutes

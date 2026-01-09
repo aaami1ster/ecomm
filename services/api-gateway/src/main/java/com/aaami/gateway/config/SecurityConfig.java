@@ -1,5 +1,6 @@
 package com.aaami.gateway.config;
 
+import com.aaami.gateway.filter.RateLimitFilter;
 import com.aaami.gateway.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
     
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -60,6 +62,7 @@ public class SecurityConfig {
                 
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();

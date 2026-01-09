@@ -34,3 +34,9 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     doc-expansion: none
+
+# Rate limiting configuration
+rate-limit:
+  login:
+    max-requests: ${RATE_LIMIT_LOGIN_MAX:5} # Maximum login attempts
+    window-minutes: ${RATE_LIMIT_LOGIN_WINDOW:15} # Time window in minutes

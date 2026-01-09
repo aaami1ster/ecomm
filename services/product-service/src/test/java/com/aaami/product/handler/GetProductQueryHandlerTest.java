@@ -4,6 +4,7 @@ import com.aaami.product.domain.Product;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.query.GetProductQuery;
 import com.aaami.product.repository.ProductRepository;
+import com.aaami.product.service.ProductCacheService;
 import com.aaami.shared.dto.ProductDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +29,9 @@ class GetProductQueryHandlerTest {
 
     @Mock
     private ProductMapper productMapper;
+
+    @Mock
+    private ProductCacheService productCacheService;
 
     @InjectMocks
     private GetProductQueryHandler handler;
@@ -61,9 +65,11 @@ class GetProductQueryHandlerTest {
     @Test
     @DisplayName("Should return product DTO when product exists")
     void handle_ShouldReturnProductDto_WhenProductExists() {
-        // Given
+        // Given - cache miss scenario
+        when(productCacheService.getCachedProduct(1L)).thenReturn(null);
         when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
         when(productMapper.toDto(product)).thenReturn(productDto);
+        doNothing().when(productCacheService).cacheProduct(any(ProductDto.class));
 
         // When
         ProductDto result = handler.handle(query);
@@ -72,8 +78,29 @@ class GetProductQueryHandlerTest {
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals("Test Product", result.getName());
+        verify(productCacheService).getCachedProduct(1L);
         verify(productRepository).findByIdAndDeletedAtIsNull(1L);
         verify(productMapper).toDto(product);
+        verify(productCacheService).cacheProduct(productDto);
+    }
+
+    @Test
+    @DisplayName("Should return cached product when available")
+    void handle_ShouldReturnCachedProduct_WhenCacheHit() {
+        // Given - cache hit scenario
+        when(productCacheService.getCachedProduct(1L)).thenReturn(productDto);
+
+        // When
+        ProductDto result = handler.handle(query);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Test Product", result.getName());
+        verify(productCacheService).getCachedProduct(1L);
+        verify(productRepository, never()).findByIdAndDeletedAtIsNull(anyLong());
+        verify(productMapper, never()).toDto(any());
+        verify(productCacheService, never()).cacheProduct(any());
     }
 
     @Test

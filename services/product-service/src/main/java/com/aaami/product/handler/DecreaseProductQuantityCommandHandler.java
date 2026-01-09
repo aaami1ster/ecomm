@@ -6,6 +6,7 @@ import com.aaami.product.domain.Product;
 import com.aaami.shared.dto.ProductDto;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
+import com.aaami.product.service.ProductCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ public class DecreaseProductQuantityCommandHandler implements CommandHandler<Dec
     
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final ProductCacheService productCacheService;
     
     @Override
     @Transactional
@@ -38,10 +40,16 @@ public class DecreaseProductQuantityCommandHandler implements CommandHandler<Dec
         product.setQuantity(newQuantity);
         
         Product updatedProduct = productRepository.save(product);
+        ProductDto productDto = productMapper.toDto(updatedProduct);
+        
         log.info("Decreased quantity for product {} by {}. New quantity: {}", 
             product.getId(), quantityToDecrease, newQuantity);
         
-        return productMapper.toDto(updatedProduct);
+        // Invalidate cache and update with new data
+        productCacheService.invalidateProduct(command.getProductId());
+        productCacheService.cacheProduct(productDto);
+        
+        return productDto;
     }
 }
 

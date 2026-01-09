@@ -5,6 +5,7 @@ import com.aaami.shared.dto.ProductDto;
 import com.aaami.product.domain.Product;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
+import com.aaami.product.service.ProductCacheService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,9 @@ class DecreaseProductQuantityCommandHandlerTest {
 
     @Mock
     private ProductMapper productMapper;
+
+    @Mock
+    private ProductCacheService productCacheService;
 
     @InjectMocks
     private DecreaseProductQuantityCommandHandler handler;
@@ -63,6 +67,8 @@ class DecreaseProductQuantityCommandHandlerTest {
         when(productRepository.findByIdAndDeletedAtIsNull(anyLong())).thenReturn(Optional.of(product));
         when(productRepository.save(any(Product.class))).thenReturn(product);
         when(productMapper.toDto(any(Product.class))).thenReturn(productDto);
+        doNothing().when(productCacheService).invalidateProduct(anyLong());
+        doNothing().when(productCacheService).cacheProduct(any(ProductDto.class));
 
         // When
         ProductDto result = handler.handle(command);
@@ -106,6 +112,8 @@ class DecreaseProductQuantityCommandHandlerTest {
         when(productRepository.findByIdAndDeletedAtIsNull(anyLong())).thenReturn(Optional.of(product));
         when(productRepository.save(any(Product.class))).thenReturn(product);
         when(productMapper.toDto(any(Product.class))).thenReturn(productDto);
+        doNothing().when(productCacheService).invalidateProduct(anyLong());
+        doNothing().when(productCacheService).cacheProduct(any(ProductDto.class));
 
         // When
         handler.handle(command);

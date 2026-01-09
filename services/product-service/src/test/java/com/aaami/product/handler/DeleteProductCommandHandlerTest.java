@@ -2,6 +2,7 @@ package com.aaami.product.handler;
 
 import com.aaami.product.domain.Product;
 import com.aaami.product.repository.ProductRepository;
+import com.aaami.product.service.ProductCacheService;
 import com.aaami.shared.command.DeleteProductCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +26,9 @@ class DeleteProductCommandHandlerTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private ProductCacheService productCacheService;
 
     @InjectMocks
     private DeleteProductCommandHandler handler;
@@ -52,6 +56,7 @@ class DeleteProductCommandHandlerTest {
         // Given
         when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(any(Product.class))).thenReturn(product);
+        doNothing().when(productCacheService).invalidateProduct(anyLong());
 
         // When
         handler.handle(command);

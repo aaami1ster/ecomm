@@ -6,6 +6,7 @@ import com.aaami.product.domain.Product;
 import com.aaami.shared.dto.ProductDto;
 import com.aaami.product.mapper.ProductMapper;
 import com.aaami.product.repository.ProductRepository;
+import com.aaami.product.service.ProductCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ public class CreateProductCommandHandler implements CommandHandler<CreateProduct
     
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final ProductCacheService productCacheService;
     
     @Override
     @Transactional
@@ -28,7 +30,12 @@ public class CreateProductCommandHandler implements CommandHandler<CreateProduct
                 .build();
         
         Product savedProduct = productRepository.save(product);
-        return productMapper.toDto(savedProduct);
+        ProductDto productDto = productMapper.toDto(savedProduct);
+        
+        // Cache the newly created product
+        productCacheService.cacheProduct(productDto);
+        
+        return productDto;
     }
 }
 
