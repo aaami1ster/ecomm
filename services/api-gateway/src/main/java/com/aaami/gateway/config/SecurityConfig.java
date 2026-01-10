@@ -37,25 +37,40 @@ public class SecurityConfig {
             // .logout(logout -> logout.disable()) // Disable default logout
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
+                // Public endpoints - Versioned
+                .requestMatchers("/api/v1/auth/login").permitAll()
+                .requestMatchers("/api/v1/auth/logout").authenticated()
+                // Public endpoints - Non-versioned (for backward compatibility)
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/auth/logout").authenticated()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
-                // User endpoints
+                // User endpoints - Versioned
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/users").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/users", "/api/v1/users/{id}").hasRole("ADMIN")
+                .requestMatchers("/api/v1/users/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
+                // User endpoints - Non-versioned (for backward compatibility)
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users", "/api/users/{id}").hasRole("ADMIN")
                 .requestMatchers("/api/users/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
 
-
-                // Product endpoints
+                // Product endpoints - Versioned
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/products", "/api/v1/products/{id}").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/products").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/products/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/products/**").hasRole("ADMIN")
+                // Product endpoints - Non-versioned (for backward compatibility)
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products", "/api/products/{id}").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/products").hasRole("ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
 
-                // Order endpoints
+                // Order endpoints - Versioned
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/orders").hasAnyRole("USER", "PREMIUM_USER")
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/orders", "/api/v1/orders/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
+                .requestMatchers("/api/v1/orders/**").hasAnyRole("USER", "PREMIUM_USER")
+                // Order endpoints - Non-versioned (for backward compatibility)
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders").hasAnyRole("USER", "PREMIUM_USER")
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/orders", "/api/orders/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
                 .requestMatchers("/api/orders/**").hasAnyRole("USER", "PREMIUM_USER")

@@ -50,7 +50,7 @@ class RateLimitFilterTest {
     @DisplayName("Should allow request when rate limit not exceeded")
     void doFilterInternal_ShouldAllowRequest_WhenRateLimitNotExceeded() throws Exception {
         // Given
-        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRemoteAddr()).thenReturn("192.168.1.1");
         when(rateLimitService.isAllowed("192.168.1.1")).thenReturn(true);
@@ -73,7 +73,7 @@ class RateLimitFilterTest {
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
         
-        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRemoteAddr()).thenReturn("192.168.1.1");
         when(rateLimitService.isAllowed("192.168.1.1")).thenReturn(false);
@@ -112,7 +112,7 @@ class RateLimitFilterTest {
     @DisplayName("Should not apply rate limiting to login GET requests")
     void doFilterInternal_ShouldNotApplyRateLimit_ForLoginGetRequest() throws Exception {
         // Given
-        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
         when(request.getMethod()).thenReturn("GET");
 
         // When
@@ -127,7 +127,7 @@ class RateLimitFilterTest {
     @DisplayName("Should extract IP from X-Forwarded-For header")
     void getClientIpAddress_ShouldUseXForwardedFor_WhenPresent() throws Exception {
         // Given
-        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
         when(request.getMethod()).thenReturn("POST");
         when(request.getHeader("X-Forwarded-For")).thenReturn("10.0.0.1, 192.168.1.1");
         when(rateLimitService.isAllowed("10.0.0.1")).thenReturn(true);
@@ -144,7 +144,7 @@ class RateLimitFilterTest {
     @DisplayName("Should extract IP from X-Real-IP header")
     void getClientIpAddress_ShouldUseXRealIP_WhenPresent() throws Exception {
         // Given
-        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
         when(request.getMethod()).thenReturn("POST");
         when(request.getHeader("X-Forwarded-For")).thenReturn(null);
         when(request.getHeader("X-Real-IP")).thenReturn("10.0.0.2");
@@ -162,7 +162,7 @@ class RateLimitFilterTest {
     @DisplayName("Should use remote address when no proxy headers")
     void getClientIpAddress_ShouldUseRemoteAddr_WhenNoProxyHeaders() throws Exception {
         // Given
-        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
         when(request.getMethod()).thenReturn("POST");
         when(request.getHeader("X-Forwarded-For")).thenReturn(null);
         when(request.getHeader("X-Real-IP")).thenReturn(null);
@@ -181,7 +181,7 @@ class RateLimitFilterTest {
     @DisplayName("Should handle IOException when writing response")
     void doFilterInternal_ShouldHandleIOException_WhenWritingResponse() throws Exception {
         // Given
-        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getRequestURI()).thenReturn("/api/v1/auth/login");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRemoteAddr()).thenReturn("192.168.1.1");
         when(rateLimitService.isAllowed("192.168.1.1")).thenReturn(false);
@@ -191,6 +191,24 @@ class RateLimitFilterTest {
         // When & Then - should not throw
         assertDoesNotThrow(() -> filter.doFilterInternal(request, response, filterChain));
         verify(filterChain, never()).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Should support backward compatibility with non-versioned login path")
+    void doFilterInternal_ShouldSupportNonVersionedPath_ForBackwardCompatibility() throws Exception {
+        // Given
+        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRemoteAddr()).thenReturn("192.168.1.1");
+        when(rateLimitService.isAllowed("192.168.1.1")).thenReturn(true);
+        when(rateLimitService.getRemainingRequests("192.168.1.1")).thenReturn(3);
+
+        // When
+        filter.doFilterInternal(request, response, filterChain);
+
+        // Then
+        verify(filterChain).doFilter(request, response);
+        verify(rateLimitService).isAllowed("192.168.1.1");
     }
 }
 

@@ -31,9 +31,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
                                     FilterChain filterChain) throws ServletException, IOException {
         
-        // Apply rate limiting only to login endpoint
-        if (request.getRequestURI().equals("/api/auth/login") && 
-            "POST".equalsIgnoreCase(request.getMethod())) {
+        // Apply rate limiting only to login endpoint (both versioned and non-versioned for backward compatibility)
+        String requestUri = request.getRequestURI();
+        if (("POST".equalsIgnoreCase(request.getMethod())) &&
+            (requestUri.equals("/api/auth/login") || requestUri.equals("/api/v1/auth/login"))) {
             
             // Use IP address as rate limit key
             String clientIp = getClientIpAddress(request);

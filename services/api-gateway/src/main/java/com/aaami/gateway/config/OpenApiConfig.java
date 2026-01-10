@@ -21,9 +21,11 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("E-Commerce API Gateway")
                         .version("1.0.0")
-                        .description("API Gateway for E-Commerce Microservices Application. " +
+                        .description("API Gateway for E-Commerce Microservices Application (API v1). " +
                                 "This gateway provides a unified entry point for accessing user, product, and order services. " +
-                                "All endpoints (except authentication) require JWT Bearer token authentication.")
+                                "All endpoints use versioned paths (/api/v1/...). " +
+                                "All endpoints (except authentication) require JWT Bearer token authentication. " +
+                                "For backward compatibility, non-versioned paths (/api/...) are also supported but deprecated.")
                         .contact(new Contact()
                                 .name("E-Commerce API Support")
                                 .email("support@ecommerce.com"))

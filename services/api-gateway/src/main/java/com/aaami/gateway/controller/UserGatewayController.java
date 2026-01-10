@@ -19,11 +19,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.aaami.gateway.config.ApiVersion;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping({ApiVersion.V1 + "/users", ApiVersion.BASE + "/users"}) // Support both v1 and non-versioned for backward compatibility
 @RequiredArgsConstructor
-@Tag(name = "Users", description = "User management endpoints. Registration is open to all. Other operations require authentication with appropriate roles.")
+@Tag(name = "Users", description = "User management endpoints (v1). Registration is open to all. Other operations require authentication with appropriate roles. Non-versioned paths are deprecated.")
 public class UserGatewayController {
     
     private final UserServiceClient userServiceClient;

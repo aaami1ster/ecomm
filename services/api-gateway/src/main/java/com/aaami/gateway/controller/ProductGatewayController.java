@@ -18,13 +18,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.aaami.gateway.config.ApiVersion;
 
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping({ApiVersion.V1 + "/products", ApiVersion.BASE + "/products"}) // Support both v1 and non-versioned for backward compatibility
 @RequiredArgsConstructor
-@Tag(name = "Products", description = "Product management endpoints. GET operations are available to all authenticated users. CRUD operations require ADMIN role.")
+@Tag(name = "Products", description = "Product management endpoints (v1). GET operations are available to all authenticated users. CRUD operations require ADMIN role. Non-versioned paths are deprecated.")
 public class ProductGatewayController {
     
     private final ProductServiceClient productServiceClient;

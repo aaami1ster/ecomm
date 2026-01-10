@@ -20,15 +20,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import jakarta.servlet.http.HttpServletRequest;
+import com.aaami.gateway.config.ApiVersion;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping({ApiVersion.V1 + "/auth", ApiVersion.BASE + "/auth"}) // Support both v1 and non-versioned for backward compatibility
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "Authentication endpoints for user login and logout")
+@Tag(name = "Authentication", description = "Authentication endpoints for user login and logout (v1). Non-versioned paths are deprecated.")
 public class AuthController {
     
     private final UserServiceClient userServiceClient;

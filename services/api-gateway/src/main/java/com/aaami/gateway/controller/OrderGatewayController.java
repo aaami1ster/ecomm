@@ -21,14 +21,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.aaami.gateway.config.ApiVersion;
 
 import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping({ApiVersion.V1 + "/orders", ApiVersion.BASE + "/orders"}) // Support both v1 and non-versioned for backward compatibility
 @RequiredArgsConstructor
-@Tag(name = "Orders", description = "Order management endpoints. USER and PREMIUM_USER can create and manage orders. ADMIN can view orders but cannot create them.")
+@Tag(name = "Orders", description = "Order management endpoints (v1). USER and PREMIUM_USER can create and manage orders. ADMIN can view orders but cannot create them. Non-versioned paths are deprecated.")
 public class OrderGatewayController {
     
     private final OrderServiceClient orderServiceClient;
