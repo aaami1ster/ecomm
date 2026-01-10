@@ -18,8 +18,8 @@ public class DiscountService {
 
     public BigDecimal calculateDiscount(BigDecimal orderSubtotal, UserRole userRole) {
         var totalDiscount = rules.stream()
-                .filter(strategy -> strategy.isApplicable(orderSubtotal, userRole))
-                .map(strategy -> strategy.calculateDiscount(orderSubtotal, userRole))
+                .filter(rule -> rule.isApplicable(orderSubtotal, userRole))
+                .map(rule -> rule.calculateDiscount(orderSubtotal, userRole))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Guardrail: never discount more than order total
