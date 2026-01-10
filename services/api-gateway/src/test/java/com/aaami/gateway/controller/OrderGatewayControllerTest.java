@@ -14,8 +14,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,10 +52,12 @@ class OrderGatewayControllerTest {
     void createOrder_ShouldReturnCreated() {
         // Given
         CreateOrderCommand command = new CreateOrderCommand();
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(1L);
         when(orderServiceClient.createOrder(any(CreateOrderCommand.class))).thenReturn(orderDto);
 
         // When
-        ResponseEntity<OrderDto> response = controller.createOrder(command);
+        ResponseEntity<OrderDto> response = controller.createOrder(command, authentication);
 
         // Then
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -63,12 +68,16 @@ class OrderGatewayControllerTest {
 
     @Test
     @DisplayName("Should get order by ID")
+    @SuppressWarnings("unchecked")
     void getOrder_ShouldReturnOrder() {
         // Given
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(1L);
+        doReturn(Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))).when(authentication).getAuthorities();
         when(orderServiceClient.getOrder(1L)).thenReturn(orderDto);
 
         // When
-        ResponseEntity<OrderDto> response = controller.getOrder(1L);
+        ResponseEntity<OrderDto> response = controller.getOrder(authentication, 1L);
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -78,8 +87,12 @@ class OrderGatewayControllerTest {
 
     @Test
     @DisplayName("Should get all orders with pagination")
+    @SuppressWarnings("unchecked")
     void getAllOrders_ShouldReturnPaginatedResponse() {
         // Given
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(1L);
+        doReturn(Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))).when(authentication).getAuthorities();
         PaginatedResponse<OrderDto> paginatedResponse = PaginatedResponse.<OrderDto>builder()
                 .content(List.of(orderDto))
                 .page(0)
@@ -94,7 +107,7 @@ class OrderGatewayControllerTest {
 
         // When
         ResponseEntity<PaginatedResponse<OrderDto>> response = controller.getAllOrders(
-                null, null, 0, 20, null, "desc");
+                authentication, null, null, 0, 20, null, "desc");
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());

@@ -32,6 +32,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
+            // .httpBasic(httpBasic -> httpBasic.disable()) // Disable basic auth
+            // .formLogin(formLogin -> formLogin.disable()) // Disable form login
+            // .logout(logout -> logout.disable()) // Disable default logout
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
@@ -40,27 +43,24 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
+                // User endpoints
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users", "/api/users/{id}").hasRole("ADMIN")
+                .requestMatchers("/api/users/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
 
-                
-                // Product GET endpoints - view allowed for all authenticated users
+
+                // Product endpoints
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products", "/api/products/{id}").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
-                
-                // Product CRUD (POST, PUT, DELETE) - only ADMIN
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/products").hasRole("ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
-                
-                // Order endpoints - USER and PREMIUM_USER can create orders, ADMIN can only view
+
+                // Order endpoints
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders").hasAnyRole("USER", "PREMIUM_USER")
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/orders", "/api/orders/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
-                // All other order operations (PUT, DELETE, etc.) - only USER and PREMIUM_USER
                 .requestMatchers("/api/orders/**").hasAnyRole("USER", "PREMIUM_USER")
-                
-                // User endpoints - authenticated users can view their own data
-                .requestMatchers("/api/users/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
-                
+
+
                 .anyRequest().authenticated()
             )
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
