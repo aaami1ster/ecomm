@@ -15,6 +15,8 @@ A modern, scalable e-commerce platform built with Spring Boot microservices arch
 - [Development](#development)
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
+- [Recent Updates](#recent-updates)
+- [Future Enhancements & TODOs](#future-enhancements--todos)
 
 ## 🎯 Overview
 
@@ -1173,6 +1175,130 @@ curl http://localhost:8082/actuator/metrics/resilience4j.retry.calls | jq
 - BCrypt password encoding
 - Rate limiting to prevent brute-force attacks
 - Improved error handling and logging
+
+## 🚀 Future Enhancements & TODOs
+
+### High Priority
+
+#### 1. Event-Driven State Changes (Most Important)
+**Current State**: Order service makes synchronous HTTP calls to Product service to decrease inventory.
+
+**Enhancement**: Implement full event-driven architecture for state changes:
+
+- **Order Service**: 
+  - Publish `order-created` event when order is placed
+  - Publish `order-status-changed` event when order status updates
+  - Remove direct HTTP calls to Product Service
+
+- **Product Service**:
+  - Consume `order-created` events from Kafka
+  - Automatically decrease product inventory based on order items
+  - Publish `inventory-decreased` event after successful update
+  - Handle event processing failures with retry and dead-letter queue
+
+- **Benefits**:
+  - **True Decoupling**: Services communicate only via events, no direct dependencies
+  - **Better Scalability**: Asynchronous processing allows better throughput
+  - **Resilience**: Event replay capability for recovery from failures
+  - **Eventual Consistency**: System remains available even if one service is temporarily down
+  - **Audit Trail**: Complete history of all state changes via events
+
+**Example Flow** (with Event Outbox Pattern):
+```
+1. User creates order → Order Service
+2. Order Service starts database transaction
+3. Order Service saves order to database
+4. Order Service saves "order-created" event to outbox table (same transaction)
+5. Transaction commits (order + event both persisted atomically)
+6. Outbox processor polls outbox table and publishes event to Kafka
+7. Product Service consumes "order-created" event
+8. Product Service decreases inventory for ordered products
+9. Product Service publishes "inventory-decreased" event (via outbox)
+10. Order Service can optionally consume "inventory-decreased" for confirmation
+```
+
+**Implementation Considerations**:
+- **Event Outbox Pattern** (Critical): 
+  - Store events in an "outbox" table within the same database transaction as business data
+  - Use a separate process (e.g., Debezium, custom poller) to read from outbox and publish to Kafka
+  - Ensures **transactional consistency**: Events are only published if the business transaction commits
+  - Prevents **lost events**: Events are persisted even if Kafka is temporarily unavailable
+  - Guarantees **at-least-once delivery**: Outbox ensures events are eventually published
+  - **Example Flow**:
+    ```
+    1. Order Service receives order creation request
+    2. Start database transaction
+    3. Save order to orders table
+    4. Save "order-created" event to outbox table (same transaction)
+    5. Commit transaction (both order and event are persisted)
+    6. Outbox processor polls outbox table
+    7. Outbox processor publishes event to Kafka
+    8. Mark event as published in outbox table
+    9. Product Service consumes event and decreases inventory
+    ```
+  - **Benefits**:
+    - **ACID Guarantees**: Event publishing is part of the business transaction
+    - **Reliability**: No events lost even during Kafka outages
+    - **Consistency**: Business data and events are always in sync
+    - **Idempotency**: Outbox processor can safely retry failed publishes
+- Use Kafka consumer groups for reliable event processing
+- Implement idempotent event handlers to prevent duplicate processing
+- Add event versioning for schema evolution
+- Implement saga pattern for distributed transactions if needed
+- Add dead-letter queue for failed events
+- Consider event sourcing for complete audit trail
+
+### Medium Priority
+
+#### 2. Event Consumers for Cross-Service Updates
+- User Service: Consume product events to maintain user preferences cache
+- Order Service: Consume user events to update order user information
+- Product Service: Consume order events for analytics and reporting
+
+#### 3. Distributed Tracing
+- Implement distributed tracing (e.g., Spring Cloud Sleuth, OpenTelemetry)
+- Track requests across all services
+- Correlate events with originating requests
+
+#### 4. API Gateway Enhancements
+- Request/response transformation
+- API aggregation (combine data from multiple services)
+- Request caching at gateway level
+- API analytics and monitoring
+
+#### 5. Advanced Caching Strategies
+- Cache warming on service startup
+- Cache invalidation via events (event-driven cache invalidation)
+- Multi-level caching (local + Redis)
+
+#### 6. Enhanced Monitoring & Observability
+- Prometheus metrics collection
+- Grafana dashboards
+- Alerting for circuit breaker states
+- Business metrics (orders per hour, revenue, etc.)
+
+### Low Priority
+
+#### 7. API v2 Planning
+- Design API v2 with breaking changes
+- Migration strategy from v1 to v2
+- Deprecation timeline for v1
+
+#### 8. GraphQL API
+- Add GraphQL endpoint for flexible data fetching
+- Reduce over-fetching and under-fetching
+- Better mobile client support
+
+#### 9. WebSocket Support
+- Real-time order status updates
+- Live inventory notifications
+- Real-time notifications for users
+
+#### 10. Advanced Security
+- OAuth2 integration
+- API key management
+- Rate limiting per user/API key
+- Request signing for additional security
 
 ---
 
