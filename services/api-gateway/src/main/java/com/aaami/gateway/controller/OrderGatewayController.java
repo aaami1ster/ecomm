@@ -5,6 +5,7 @@ import com.aaami.shared.command.CreateOrderCommand;
 import com.aaami.shared.dto.OrderDto;
 import com.aaami.shared.dto.OrderStatus;
 import com.aaami.shared.dto.PaginatedResponse;
+import com.aaami.shared.dto.UserRole;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,12 +16,15 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -57,7 +61,15 @@ public class OrderGatewayController {
             )
     })
     @PostMapping
-    public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody CreateOrderCommand command) {
+    public ResponseEntity<OrderDto> createOrder(
+            @Valid @RequestBody CreateOrderCommand command,
+            Authentication authentication) {
+        // Extract user ID from JWT token (stored in SecurityContext by JwtAuthenticationFilter)
+        Long userId = (Long) authentication.getPrincipal();
+        log.info("Creating order for user ID: {}", userId);
+        // Set userId from JWT token, ignoring any userId in request body
+        command.setUserId(userId);
+        
         OrderDto order = orderServiceClient.createOrder(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
@@ -81,6 +93,7 @@ public class OrderGatewayController {
     })
     @GetMapping
     public ResponseEntity<PaginatedResponse<OrderDto>> getAllOrders(
+            Authentication authentication,
             @Parameter(description = "Filter by user ID", example = "1")
             @RequestParam(value = "userId", required = false) Long userId,
             @Parameter(description = "Filter by order status", example = "PENDING", schema = @Schema(implementation = OrderStatus.class))
@@ -93,6 +106,14 @@ public class OrderGatewayController {
             @RequestParam(value = "sortBy", required = false) String sortBy,
             @Parameter(description = "Sort direction (asc or desc)", example = "desc")
             @RequestParam(value = "sortDirection", required = false, defaultValue = "desc") String sortDirection) {
+        Long authenticatedUserId = (Long) authentication.getPrincipal();
+        UserRole userRole = getUserRole(authentication);
+        
+        // For non-admin users, filter to their own orders
+        if (userRole != UserRole.ADMIN) {
+            userId = authenticatedUserId;
+        }
+
         PaginatedResponse<OrderDto> response = orderServiceClient.getAllOrders(userId, status, page, size, sortBy, sortDirection);
         return ResponseEntity.ok(response);
     }
@@ -121,9 +142,17 @@ public class OrderGatewayController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<OrderDto> getOrder(
+            Authentication authentication,
             @Parameter(description = "Order ID", example = "1", required = true)
             @PathVariable("id") Long id) {
+        Long authenticatedUserId = (Long) authentication.getPrincipal();
+        UserRole userRole = getUserRole(authentication);
+        
+        
         OrderDto order = orderServiceClient.getOrder(id);
+        if (userRole != UserRole.ADMIN && order.getUserId() != authenticatedUserId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(order);
     }
     
@@ -152,5 +181,18 @@ public class OrderGatewayController {
         return ResponseEntity.ok(orders);
     }
     
+    private UserRole getUserRole(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .map(authority -> {
+                    String authorityName = authority.getAuthority();
+                    if (authorityName.startsWith("ROLE_")) {
+                        return authorityName.substring(5);
+                    }
+                    return authorityName;
+                })
+                .map(UserRole::valueOf)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("User has no role assigned"));
+    }
 }
 
