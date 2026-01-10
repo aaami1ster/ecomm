@@ -56,13 +56,19 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
 
-      # Redis Configuration (if needed)
+      # Service URLs
+      SERVICES_PRODUCT_SERVICE_URL: http://product-service:8081
+      SERVICES_USER_SERVICE_URL: http://user-service:8083
+
+      # Redis Configuration
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
 
       # Kafka Configuration
       KAFKA_BOOTSTRAP_SERVERS: broker:29092
+      KAFKA_TOPIC_ORDER_CREATED: order-created
+      KAFKA_TOPIC_ORDER_STATUS_CHANGED: order-status-changed
 
     ports:
       - "8082:8082"
@@ -100,13 +106,16 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
 
-      # Redis Configuration (if needed)
+      # Redis Configuration
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
 
       # Kafka Configuration
       KAFKA_BOOTSTRAP_SERVERS: broker:29092
+      KAFKA_TOPIC_USER_CREATED: user-created
+      KAFKA_TOPIC_USER_UPDATED: user-updated
+      KAFKA_TOPIC_USER_DELETED: user-deleted
 
     ports:
       - "8083:8083"
@@ -144,13 +153,20 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
 
-      # Redis Configuration (if needed)
+      # Redis Configuration
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
 
       # Kafka Configuration
       KAFKA_BOOTSTRAP_SERVERS: broker:29092
+      KAFKA_TOPIC_PRODUCT_CREATED: product-created
+      KAFKA_TOPIC_PRODUCT_UPDATED: product-updated
+      KAFKA_TOPIC_PRODUCT_DELETED: product-deleted
+      KAFKA_TOPIC_INVENTORY_DECREASED: inventory-decreased
+
+      # Product Cache Configuration
+      PRODUCT_CACHE_TTL_MINUTES: 30
 
     ports:
       - "8081:8081"
@@ -187,6 +203,14 @@ services:
       SERVICES_PRODUCT_SERVICE_URL: http://product-service:8081
       SERVICES_ORDER_SERVICE_URL: http://order-service:8082
       SERVICES_USER_SERVICE_URL: http://user-service:8083
+
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-this-in-production-use-a-long-random-string-at-least-256-bits}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000} # 24 hours in milliseconds
+
+      # Rate Limiting Configuration
+      RATE_LIMIT_LOGIN_MAX: ${RATE_LIMIT_LOGIN_MAX:-5} # Maximum login attempts
+      RATE_LIMIT_LOGIN_WINDOW: ${RATE_LIMIT_LOGIN_WINDOW:-15} # Time window in minutes
 
       # Redis Configuration
       REDIS_HOST: redis
