@@ -99,7 +99,13 @@ public abstract class BaseGlobalExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalStateException(
             IllegalStateException ex, HttpServletRequest request) {
-        log.warn("Illegal state: {}", ex.getMessage());
+        // Log at DEBUG level for service unavailability (circuit breaker, retry failures)
+        // These are expected during transient failures and don't need WARN level logging
+        if (ex.getMessage() != null && ex.getMessage().contains("service unavailable")) {
+            log.debug("Service unavailable (circuit breaker/retry): {}", ex.getMessage());
+        } else {
+            log.warn("Illegal state: {}", ex.getMessage());
+        }
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.CONFLICT.value())
