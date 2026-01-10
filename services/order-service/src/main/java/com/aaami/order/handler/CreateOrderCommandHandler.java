@@ -86,14 +86,27 @@ public class CreateOrderCommandHandler implements CommandHandler<CreateOrderComm
             ProductDto product;
             try {
                 product = productServiceClient.getProduct(itemCommand.getProductId());
+            } catch (IllegalArgumentException e) {
+                // Re-throw IllegalArgumentException (from fallback when product not found)
+                throw e;
             } catch (org.springframework.web.client.HttpClientErrorException.NotFound e) {
+                log.warn("Product {} not found in product service", itemCommand.getProductId());
                 throw new IllegalArgumentException("Product not found with id: " + itemCommand.getProductId());
+            } catch (org.springframework.web.client.HttpClientErrorException e) {
+                // Handle other HTTP client errors (4xx)
+                if (e.getStatusCode().value() == 404) {
+                    log.warn("Product {} not found in product service", itemCommand.getProductId());
+                    throw new IllegalArgumentException("Product not found with id: " + itemCommand.getProductId());
+                }
+                log.error("HTTP error fetching product {} from product service: {}", itemCommand.getProductId(), e.getMessage());
+                throw new IllegalStateException("Unable to fetch product details. Please try again later.");
             } catch (org.springframework.web.client.RestClientException e) {
                 log.error("Error fetching product {} from product service: {}", itemCommand.getProductId(), e.getMessage());
                 throw new IllegalStateException("Unable to fetch product details. Please try again later.");
             }
             
             if (product == null) {
+                log.warn("Product {} returned null from product service", itemCommand.getProductId());
                 throw new IllegalArgumentException("Product not found with id: " + itemCommand.getProductId());
             }
             

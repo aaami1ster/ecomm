@@ -36,11 +36,21 @@ public class ProductServiceClient {
     
     // Fallback methods
     private ProductDto getProductFallback(Long id, Exception ex) {
-        throw new RuntimeException("Product service unavailable. Unable to get product: " + id, ex);
+        // Check if the original exception was a 404 (product not found)
+        if (ex instanceof org.springframework.web.client.HttpClientErrorException.NotFound) {
+            throw new IllegalArgumentException("Product not found with id: " + id, ex);
+        }
+        // For other errors (circuit breaker open, service unavailable, etc.)
+        throw new IllegalStateException("Product service unavailable. Unable to get product: " + id, ex);
     }
     
     private ProductDto decreaseProductQuantityFallback(Long productId, Integer quantity, Exception ex) {
-        throw new RuntimeException("Product service unavailable. Unable to decrease product quantity: " + productId, ex);
+        // Check if the original exception was a 404 (product not found)
+        if (ex instanceof org.springframework.web.client.HttpClientErrorException.NotFound) {
+            throw new IllegalArgumentException("Product not found with id: " + productId, ex);
+        }
+        // For other errors (circuit breaker open, service unavailable, etc.)
+        throw new IllegalStateException("Product service unavailable. Unable to decrease product quantity: " + productId, ex);
     }
 }
 

@@ -178,15 +178,28 @@ class CreateOrderCommandHandlerTest {
     }
 
     @Test
-    void handle_ShouldThrowIllegalStateException_WhenProductServiceFails() {
-        // Given - HttpClientErrorException extends RestClientException, so it's caught by the RestClientException handler
-        // which throws IllegalStateException (not IllegalArgumentException from NotFound handler)
+    void handle_ShouldThrowIllegalArgumentException_WhenProductNotFound() {
+        // Given
         lenient().when(idempotencyService.getCachedOrder(anyString())).thenReturn(null);
         when(productServiceClient.getProduct(anyLong()))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND, "Product not found"));
 
         // When & Then
-        // The handler catches RestClientException (parent of HttpClientErrorException) and throws IllegalStateException
+        // The handler should throw IllegalArgumentException when product is not found (404)
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> handler.handle(command));
+        assertTrue(exception.getMessage().contains("Product not found with id: 1"));
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void handle_ShouldThrowIllegalStateException_WhenProductServiceFails() {
+        // Given - Generic RestClientException (not 404) should throw IllegalStateException
+        lenient().when(idempotencyService.getCachedOrder(anyString())).thenReturn(null);
+        when(productServiceClient.getProduct(anyLong()))
+                .thenThrow(new org.springframework.web.client.RestClientException("Service unavailable"));
+
+        // When & Then
+        // The handler catches RestClientException and throws IllegalStateException
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> handler.handle(command));
         assertTrue(exception.getMessage().contains("Unable to fetch product details"));
         verify(orderRepository, never()).save(any(Order.class));
