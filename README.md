@@ -1,6 +1,6 @@
 # E-Commerce Microservices Platform
 
-A modern, scalable e-commerce platform built with Spring Boot microservices architecture, featuring stateless JWT authentication, Redis caching, and comprehensive API documentation.
+A modern, scalable e-commerce platform built with Spring Boot microservices architecture, featuring API versioning, resilience patterns (circuit breaker & retry), event-driven architecture with Kafka, Redis caching, stateless JWT authentication, and comprehensive API documentation.
 
 ## 📋 Table of Contents
 
@@ -23,8 +23,12 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
 ### Key Features
 
 - **Microservices Architecture**: Independent, scalable services for users, products, and orders
+- **API Versioning**: URL-based versioning (`/api/v1/...`) with backward compatibility support
 - **Stateless JWT Authentication**: Secure token-based authentication without server-side session storage
 - **Role-Based Access Control (RBAC)**: Three-tier role system (USER, PREMIUM_USER, ADMIN)
+- **Resilience Patterns**: Circuit breaker and retry mechanisms for inter-service communication
+- **Event-Driven Architecture**: Kafka-based event streaming for service communication
+- **Redis Caching**: Product caching for hot reads and rate limiting
 - **CQRS Pattern**: Command Query Responsibility Segregation for better separation of concerns
 - **RESTful APIs**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
 - **Database Migrations**: Flyway for version-controlled database schema management
@@ -72,9 +76,8 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
                │
                │
         ┌──────▼──────┐
-        │ Event Bus   │
-        │ (NATS /     │
-        │  Kafka)     │
+        │   Kafka     │
+        │   Broker    │
         │             │
         │ - UserEvents│
         │ - ProductEv │
@@ -91,7 +94,10 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
   - Request routing to appropriate microservices
   - JWT token validation and authentication
   - Role-based access control enforcement
+  - API versioning (`/api/v1/...`)
+  - Rate limiting (login endpoint)
   - API documentation (Swagger/OpenAPI)
+  - Circuit breaker and retry for downstream services
 
 #### User Service (Port 8083)
 - **Purpose**: User management and authentication
@@ -99,6 +105,9 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
   - User CRUD operations
   - User role management (USER, PREMIUM_USER, ADMIN)
   - User profile management
+  - BCrypt password encoding
+  - Password verification endpoint
+  - Kafka event publishing (user lifecycle events)
   - Database: `user_db`
 
 #### Product Service (Port 8081)
@@ -107,6 +116,8 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
   - Product CRUD operations
   - Product inventory management
   - Product search and filtering
+  - Redis caching for hot reads
+  - Kafka event publishing (product lifecycle events)
   - Database: `product_db`
 
 #### Order Service (Port 8082)
@@ -115,7 +126,9 @@ This e-commerce platform is a multi-module Spring Boot application implementing 
   - Order creation and management
   - Order status tracking
   - Discount calculation based on user roles
-  - Inventory synchronization with Product Service
+  - Inventory synchronization with Product Service (with circuit breaker and retry)
+  - Idempotency key support for order creation
+  - Kafka event publishing (order lifecycle events)
   - Database: `order_db`
 
 ### Shared Module
@@ -214,7 +227,123 @@ The `shared` module contains:
 - **Maintainability**: Clear, single-responsibility classes for each discount type
 - **Testability**: Each rule can be unit tested independently
 
-### 9. Idempotency Key for Order Creation
+### 9. API Versioning
+
+**Decision**: URL-based API versioning with backward compatibility
+
+**Rationale**:
+- **Future-Proof**: Enables API evolution without breaking existing clients
+- **Clear Migration Path**: Clients can migrate to new versions at their own pace
+- **Backward Compatibility**: Non-versioned paths (`/api/...`) are still supported but deprecated
+- **Consistency**: Centralized version constants ensure consistency across all endpoints
+- **Industry Standard**: URL-based versioning is widely adopted and easy to understand
+
+**Implementation**:
+- All endpoints support both `/api/v1/...` (recommended) and `/api/...` (deprecated)
+- Version constants defined in `ApiVersion` class for maintainability
+- OpenAPI documentation reflects API versioning
+- Rate limiting and security configurations support both versioned and non-versioned paths
+
+**Example**:
+```
+POST /api/v1/auth/login     (Recommended)
+POST /api/auth/login        (Deprecated, but still supported)
+```
+
+### 10. Resilience Patterns (Circuit Breaker & Retry)
+
+**Decision**: Resilience4j for circuit breaker and retry patterns in inter-service communication
+
+**Rationale**:
+- **Fault Tolerance**: Prevents cascading failures when downstream services are unavailable
+- **Improved User Experience**: Automatic retries for transient failures
+- **Resource Protection**: Circuit breaker prevents overwhelming failing services
+- **Observability**: Health indicators and metrics for monitoring
+- **Configurable**: Fine-tuned settings per service (product, user, order)
+
+**Implementation Details**:
+
+**Circuit Breaker**:
+- **Failure Rate Threshold**: 50% (opens circuit when 50% of calls fail)
+- **Sliding Window Size**: 10 calls
+- **Minimum Calls**: 5 calls before circuit can open
+- **Wait Duration**: 10 seconds in open state before attempting half-open
+- **Half-Open State**: Allows 3 test calls before fully closing
+- **Fallback Methods**: Graceful degradation with meaningful error messages
+
+**Retry**:
+- **Max Attempts**: 3 retries for transient failures
+- **Wait Duration**: 1 second initial delay
+- **Exponential Backoff**: Enabled with multiplier of 2
+- **Retryable Exceptions**: Network errors, connection timeouts, server errors
+
+**Services Using Resilience**:
+- **Order Service**: Circuit breaker and retry for Product Service and User Service calls
+- **API Gateway**: Circuit breaker and retry for all downstream service calls
+
+**Benefits**:
+- **Resilience**: System continues operating even when some services are down
+- **Performance**: Automatic retries handle transient network issues
+- **Monitoring**: Health indicators show circuit breaker status
+- **User Experience**: Better error messages instead of generic failures
+
+### 11. Event-Driven Architecture with Kafka
+
+**Decision**: Kafka for asynchronous event-driven communication between services
+
+**Rationale**:
+- **Decoupling**: Services communicate via events, reducing tight coupling
+- **Scalability**: Event streaming allows horizontal scaling
+- **Reliability**: Kafka provides durability and message ordering
+- **Event Sourcing Ready**: Foundation for event sourcing patterns
+- **Audit Trail**: All events are persisted for audit and replay
+
+**Event Types**:
+- **User Events**: `user-created`, `user-updated`, `user-deleted`
+- **Product Events**: `product-created`, `product-updated`, `product-deleted`, `inventory-decreased`
+- **Order Events**: `order-created`, `order-status-changed`
+
+**Configuration**:
+- Kafka broker accessible at `broker:29092` in Docker environment
+- Topics auto-created on first use
+- JSON serialization for event payloads
+- Idempotent producers enabled
+
+### 12. Redis Caching Strategy
+
+**Decision**: Cache-aside pattern for product data with TTL-based expiration
+
+**Rationale**:
+- **Performance**: Sub-millisecond read times for frequently accessed products
+- **Reduced Database Load**: Caching hot reads reduces database queries
+- **Scalability**: Redis can handle high-throughput cache operations
+- **TTL Management**: Automatic cache expiration (30 minutes default)
+- **Cache Invalidation**: Smart invalidation on product updates/deletes
+
+**Implementation**:
+- Product reads check cache first, then database
+- Cache miss: fetch from database and populate cache
+- Cache hit: return cached data immediately
+- Updates/deletes invalidate relevant cache entries
+- Graceful degradation: system works even if Redis is unavailable
+
+### 13. Rate Limiting
+
+**Decision**: Redis-based rate limiting for login endpoint using sliding window algorithm
+
+**Rationale**:
+- **Security**: Prevents brute-force attacks on authentication
+- **Resource Protection**: Limits abuse of login endpoint
+- **Configurable**: Adjustable limits via environment variables
+- **Distributed**: Works across multiple gateway instances
+
+**Configuration**:
+- **Default**: 5 login attempts per 15-minute window
+- **Key**: Client IP address
+- **Response**: 429 Too Many Requests with retry-after header
+- **Headers**: X-RateLimit-Limit, X-RateLimit-Remaining
+
+### 14. Idempotency Key for Order Creation
 
 **Decision**: Optional idempotency key support for order creation using Redis caching
 
@@ -257,6 +386,7 @@ The `shared` module contains:
 - **Postman** or **cURL** for API testing
 - **IntelliJ IDEA** or **vsCode** for development
 - **pgAdmin** or **tablePlus** for database management
+- **Kafka UI** (available at http://localhost:8090) for Kafka topic management
 
 ## 🚀 Quick Start
 
@@ -285,6 +415,45 @@ Services will be available at:
 - **Product Service**: http://localhost:8081
 - **Order Service**: http://localhost:8082
 - **User Service**: http://localhost:8083
+- **Kafka UI**: http://localhost:8090 (admin/pass)
+
+### Default User Credentials
+
+The following test users are available for testing (password for all: `password123`):
+
+| Email                 | Password    | Role         | Permissions                                                            |
+| --------------------- | ----------- | ------------ | ---------------------------------------------------------------------- |
+| `admin@example.com`   | password123 | ADMIN        | Full access, can view all orders, manage products/users                |
+| `user@example.com`    | password123 | USER         | Can create orders, view own orders, 5% discount on orders >$500        |
+| `premium@example.com` | password123 | PREMIUM_USER | Can create orders, view own orders, 10% discount + 5% for large orders |
+
+**Example Login**:
+
+```bash
+# Login as admin
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "password123"
+  }'
+
+# Login as regular user
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123"
+  }'
+
+# Login as premium user
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "premium@example.com",
+    "password": "password123"
+  }'
+```
 
 ### Option 2: Local Development
 
@@ -339,7 +508,20 @@ curl http://localhost:8080/actuator/health
 
 # Check Swagger UI
 open http://localhost:8080/swagger-ui.html
+
+# Test login with default user
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123"
+  }'
 ```
+
+**Default Test Users** (password for all: `password123`):
+- `admin@example.com` - ADMIN role (full access)
+- `user@example.com` - USER role (can create orders)
+- `premium@example.com` - PREMIUM_USER role (10% discount + 5% for large orders)
 
 ## ⚙️ Configuration
 
@@ -366,6 +548,13 @@ JWT_EXPIRATION=86400000  # 24 hours in milliseconds
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
+
+# Rate Limiting Configuration
+RATE_LIMIT_LOGIN_MAX=5
+RATE_LIMIT_LOGIN_WINDOW=15  # minutes
+
+# Kafka Configuration
+SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:29092
 ```
 
 #### Database Configuration
@@ -406,6 +595,29 @@ CREATE DATABASE product_db;
 CREATE DATABASE order_db;
 ```
 
+### Kafka Configuration
+
+Kafka is used for event-driven communication between services. Configuration is done via environment variables:
+
+```bash
+# Kafka Bootstrap Servers
+SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:29092  # Docker environment
+# SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092  # Local development
+
+# Topic Names (optional, defaults provided)
+KAFKA_TOPIC_USER_CREATED=user-created
+KAFKA_TOPIC_USER_UPDATED=user-updated
+KAFKA_TOPIC_USER_DELETED=user-deleted
+KAFKA_TOPIC_PRODUCT_CREATED=product-created
+KAFKA_TOPIC_PRODUCT_UPDATED=product-updated
+KAFKA_TOPIC_PRODUCT_DELETED=product-deleted
+KAFKA_TOPIC_INVENTORY_DECREASED=inventory-decreased
+KAFKA_TOPIC_ORDER_CREATED=order-created
+KAFKA_TOPIC_ORDER_STATUS_CHANGED=order-status-changed
+```
+
+**Note**: Topics are auto-created on first use. For production, consider pre-creating topics with appropriate partitions and replication factors.
+
 ## 📚 API Documentation
 
 ### Interactive API Documentation
@@ -415,6 +627,15 @@ The API Gateway provides interactive Swagger documentation:
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **OpenAPI JSON**: http://localhost:8080/v3/api-docs
 
+### API Versioning
+
+All API endpoints support versioned paths. The recommended approach is to use `/api/v1/...` paths:
+
+- **Versioned (Recommended)**: `/api/v1/auth/login`, `/api/v1/users`, `/api/v1/products`, `/api/v1/orders`
+- **Non-Versioned (Deprecated)**: `/api/auth/login`, `/api/users`, `/api/products`, `/api/orders`
+
+Non-versioned paths are still supported for backward compatibility but are deprecated. New clients should use versioned paths.
+
 ### Authentication
 
 All endpoints (except login and registration) require JWT authentication.
@@ -422,7 +643,7 @@ All endpoints (except login and registration) require JWT authentication.
 #### Login
 
 ```http
-POST /api/auth/login
+POST /api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -430,6 +651,8 @@ Content-Type: application/json
   "password": "password123"
 }
 ```
+
+**Rate Limiting**: Login endpoint is rate-limited to 5 attempts per 15 minutes per IP address. Exceeding the limit returns `429 Too Many Requests`.
 
 **Response:**
 ```json
@@ -455,48 +678,52 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 #### Logout
 
 ```http
-POST /api/auth/logout
+POST /api/v1/auth/logout
 Authorization: Bearer {token}
 ```
 
 ### API Endpoints
 
+> **Note**: All endpoints support both `/api/v1/...` (recommended) and `/api/...` (deprecated) paths. Examples below use versioned paths.
+
 #### Authentication Endpoints
 
-| Method | Endpoint           | Description | Auth Required |
-| ------ | ------------------ | ----------- | ------------- |
-| POST   | `/api/auth/login`  | User login  | No            |
-| POST   | `/api/auth/logout` | User logout | Yes           |
+| Method | Endpoint              | Description | Auth Required |
+| ------ | --------------------- | ----------- | ------------- |
+| POST   | `/api/v1/auth/login`  | User login  | No            |
+| POST   | `/api/v1/auth/logout` | User logout | Yes           |
 
 #### User Endpoints
 
-| Method | Endpoint                   | Description               | Roles |
-| ------ | -------------------------- | ------------------------- | ----- |
-| POST   | `/api/users`               | Create user               | All   |
-| GET    | `/api/users`               | Get all users (paginated) | ADMIN |
-| GET    | `/api/users/{id}`          | Get user by ID            | ADMIN |
-| GET    | `/api/users/email/{email}` | Get user by email         | ADMIN |
-| PUT    | `/api/users/{id}`          | Update user               | All   |
-| DELETE | `/api/users/{id}`          | Delete user               | ADMIN |
+| Method | Endpoint                      | Description               | Roles |
+| ------ | ----------------------------- | ------------------------- | ----- |
+| POST   | `/api/v1/users`               | Create user               | All   |
+| GET    | `/api/v1/users`               | Get all users (paginated) | ADMIN |
+| GET    | `/api/v1/users/{id}`          | Get user by ID            | ADMIN |
+| GET    | `/api/v1/users/email/{email}` | Get user by email         | ADMIN |
+| PUT    | `/api/v1/users/{id}`          | Update user               | All   |
+| DELETE | `/api/v1/users/{id}`          | Delete user               | ADMIN |
 
 #### Product Endpoints
 
-| Method | Endpoint             | Description                 | Roles                     |
-| ------ | -------------------- | --------------------------- | ------------------------- |
-| POST   | `/api/products`      | Create product              | ADMIN                     |
-| GET    | `/api/products`      | Search products (paginated) | USER, PREMIUM_USER, ADMIN |
-| GET    | `/api/products/{id}` | Get product by ID           | USER, PREMIUM_USER, ADMIN |
-| PUT    | `/api/products/{id}` | Update product              | ADMIN                     |
-| DELETE | `/api/products/{id}` | Delete product              | ADMIN                     |
+| Method | Endpoint                | Description                 | Roles                     |
+| ------ | ----------------------- | --------------------------- | ------------------------- |
+| POST   | `/api/v1/products`      | Create product              | ADMIN                     |
+| GET    | `/api/v1/products`      | Search products (paginated) | USER, PREMIUM_USER, ADMIN |
+| GET    | `/api/v1/products/{id}` | Get product by ID           | USER, PREMIUM_USER, ADMIN |
+| PUT    | `/api/v1/products/{id}` | Update product              | ADMIN                     |
+| DELETE | `/api/v1/products/{id}` | Delete product              | ADMIN                     |
 
 #### Order Endpoints
 
-| Method | Endpoint                    | Description                                 | Roles                     |
-| ------ | --------------------------- | ------------------------------------------- | ------------------------- |
-| POST   | `/api/orders`               | Create order (with idempotency key support) | USER, PREMIUM_USER, ADMIN |
-| GET    | `/api/orders`               | Get all orders (paginated)                  | USER, PREMIUM_USER, ADMIN |
-| GET    | `/api/orders/{id}`          | Get order by ID                             | USER, PREMIUM_USER, ADMIN |
-| GET    | `/api/orders/user/{userId}` | Get user orders                             | USER, PREMIUM_USER, ADMIN |
+| Method | Endpoint                       | Description                                 | Roles                     |
+| ------ | ------------------------------ | ------------------------------------------- | ------------------------- |
+| POST   | `/api/v1/orders`               | Create order (with idempotency key support) | USER, PREMIUM_USER        |
+| GET    | `/api/v1/orders`               | Get all orders (paginated)                  | USER, PREMIUM_USER, ADMIN |
+| GET    | `/api/v1/orders/{id}`          | Get order by ID                             | USER, PREMIUM_USER, ADMIN |
+| GET    | `/api/v1/orders/user/{userId}` | Get user orders                             | USER, PREMIUM_USER, ADMIN |
+
+> **Note**: ADMIN role can view orders but cannot create them.
 
 ### Role-Based Access Control
 
@@ -588,7 +815,7 @@ See [DISCOUNT_SYSTEM.md](services/order-service/DISCOUNT_SYSTEM.md) for detailed
 #### Create a User
 
 ```bash
-curl -X POST http://localhost:8080/api/users \
+curl -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -602,18 +829,35 @@ curl -X POST http://localhost:8080/api/users \
 #### Login
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+# Login with default test user
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
     "password": "password123"
   }'
+
+# Response contains JWT token
+# {
+#   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+#   "type": "Bearer",
+#   "user": {
+#     "id": 1,
+#     "email": "user@example.com",
+#     "role": "USER"
+#   }
+# }
 ```
+
+**Available Test Users**:
+- `admin@example.com` / `password123` - ADMIN role
+- `user@example.com` / `password123` - USER role  
+- `premium@example.com` / `password123` - PREMIUM_USER role
 
 #### Create a Product (Admin)
 
 ```bash
-curl -X POST http://localhost:8080/api/products \
+curl -X POST http://localhost:8080/api/v1/products \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -629,11 +873,10 @@ curl -X POST http://localhost:8080/api/products \
 Orders are created with **CONFIRMED** status immediately, and product inventory is decreased automatically. You can optionally provide an `idempotencyKey` to prevent duplicate orders:
 
 ```bash
-curl -X POST http://localhost:8080/api/orders \
+curl -X POST http://localhost:8080/api/v1/orders \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
-    "userId": 1,
     "idempotencyKey": "unique-key-123",
     "items": [
       {
@@ -643,6 +886,8 @@ curl -X POST http://localhost:8080/api/orders \
     ]
   }'
 ```
+
+> **Note**: The `userId` is automatically extracted from the JWT token. USER and PREMIUM_USER can only view their own orders, while ADMIN can view all orders.
 
 **Note**: 
 - Orders are created with **CONFIRMED** status immediately (no separate confirmation step)
@@ -831,6 +1076,27 @@ Recommended CI/CD pipeline:
 - Verify Redis password (if configured)
 - Check network connectivity
 
+#### Kafka Connection Issues
+
+**Problem**: Services cannot connect to Kafka broker
+
+**Solutions**:
+- Verify Kafka broker is running: `docker compose ps broker`
+- Check `SPRING_KAFKA_BOOTSTRAP_SERVERS` environment variable is set to `broker:29092`
+- Verify Kafka broker health: `docker compose logs broker`
+- Check network connectivity between services and broker
+- Ensure Kafka topics are created (auto-created on first use)
+
+#### Circuit Breaker Open
+
+**Problem**: Circuit breaker is open, requests failing immediately
+
+**Solutions**:
+- Check downstream service health
+- Review circuit breaker metrics: `/actuator/health`
+- Wait for circuit breaker to transition to half-open state (10 seconds default)
+- Verify service endpoints are responding correctly
+
 ### Logging
 
 Application logs are available via:
@@ -859,11 +1125,56 @@ curl http://localhost:8081/actuator/health
 
 # Order Service
 curl http://localhost:8082/actuator/health
+
+# Kafka Broker
+docker compose logs broker --tail 20
+```
+
+### Resilience Monitoring
+
+Monitor circuit breaker and retry metrics:
+
+```bash
+# Circuit breaker health indicators
+curl http://localhost:8082/actuator/health | jq '.components.circuitBreakers'
+
+# Retry metrics
+curl http://localhost:8082/actuator/metrics/resilience4j.retry.calls | jq
 ```
 
 
 
 ---
 
-**Built with ❤️ using Spring Boot, Docker, and modern microservices patterns.**
+## 🔄 Recent Updates
+
+### API Versioning
+- All endpoints now support versioned paths (`/api/v1/...`)
+- Backward compatibility maintained for non-versioned paths
+- Centralized version constants for maintainability
+
+### Resilience Patterns
+- Circuit breaker implementation for inter-service communication
+- Automatic retry with exponential backoff
+- Graceful degradation with meaningful error messages
+- Health indicators for monitoring
+
+### Event-Driven Architecture
+- Kafka integration for asynchronous event publishing
+- Event types: user, product, and order lifecycle events
+- Kafka UI available at http://localhost:8090
+
+### Performance Optimizations
+- Redis caching for product hot reads
+- Cache-aside pattern with TTL-based expiration
+- Rate limiting for login endpoint
+
+### Security Enhancements
+- BCrypt password encoding
+- Rate limiting to prevent brute-force attacks
+- Improved error handling and logging
+
+---
+
+**Built with ❤️ using Spring Boot, Docker, Kafka, Redis, and modern microservices patterns.**
 
